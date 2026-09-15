@@ -148,7 +148,11 @@ For a signed release, click `⚠ Setup` and approve LidMode under **System Setti
 
 ### `⚠ Error`
 
-Run `./Scripts/verify-install.sh`. Common causes are a removed helper, changed ownership or modes, or a missing sudoers rule. Detailed operational events are available in Console under subsystem `app.lidmode.LidMode`; LidMode does not create log files.
+Run `./Scripts/verify-install.sh`. Common causes are a removed helper, changed ownership or modes, or a missing sudoers rule. Detailed operational events are available in Console under subsystem `io.github.2394826867zhu-stack.LidMode`; LidMode does not create log files.
+
+### The app runs but no menu bar icon appears
+
+On macOS 26 or later, check **System Settings → Menu Bar → Allow in the Menu Bar** and make sure LidMode is enabled. macOS controls this visibility independently of the app; `NSStatusItem.isVisible` can still report `true` when the item is hidden by the system. LidMode uses a stable, project-specific bundle identifier so its permission is not shared with another app.
 
 ### Login item is not enabled
 

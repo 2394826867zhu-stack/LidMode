@@ -6,6 +6,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private let loginItemService = LoginItemService()
   private let helperClient = HelperClient()
 
+  static func main() {
+    let application = NSApplication.shared
+    application.setActivationPolicy(.accessory)
+    let delegate = AppDelegate()
+    application.delegate = delegate
+    application.run()
+  }
+
   func applicationDidFinishLaunching(_ notification: Notification) {
     if CommandLine.arguments.contains("--unregister-login-item") {
       loginItemService.unregister()
@@ -14,11 +22,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       return
     }
 
-    if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+    if NSClassFromString("XCTestCase") != nil {
       return
     }
 
-    NSApp.setActivationPolicy(.accessory)
     AppLog.lifecycle.info("App started")
 
     let controller = StatusBarController(powerStateService: PowerStateService())

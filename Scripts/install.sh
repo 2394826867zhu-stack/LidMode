@@ -21,6 +21,7 @@ HAD_SUDOERS=0
 CREATED_LIBEXEC=0
 CREATED_USR_LOCAL=0
 MUTATION_STARTED=0
+APP_WAS_RUNNING=0
 
 cleanup() {
     if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$MUTATION_STARTED" -eq 1 ]]; then
@@ -43,6 +44,10 @@ cleanup() {
             /usr/bin/sudo /usr/bin/install -o root -g wheel -m 440 "$BACKUP_DIR/lidmode.sudoers" "$SUDOERS_TARGET"
         else
             /usr/bin/sudo /bin/rm -f "$SUDOERS_TARGET"
+        fi
+
+        if [[ "$APP_WAS_RUNNING" -eq 1 && -d "$APP_TARGET" ]]; then
+            /usr/bin/open "$APP_TARGET" 2>/dev/null || true
         fi
 
     fi
@@ -163,6 +168,22 @@ fi
 /usr/bin/sudo /usr/sbin/visudo -cf "$ROOT_STAGING_DIR/lidmode.sudoers"
 
 MUTATION_STARTED=1
+
+if /usr/bin/pgrep -f '^/Applications/LidMode\.app/Contents/MacOS/LidMode$' >/dev/null; then
+    APP_WAS_RUNNING=1
+    /usr/bin/pkill -TERM -f '^/Applications/LidMode\.app/Contents/MacOS/LidMode$'
+    for _ in {1..20}; do
+        if ! /usr/bin/pgrep -f '^/Applications/LidMode\.app/Contents/MacOS/LidMode$' >/dev/null; then
+            break
+        fi
+        /bin/sleep 0.1
+    done
+    if /usr/bin/pgrep -f '^/Applications/LidMode\.app/Contents/MacOS/LidMode$' >/dev/null; then
+        echo "Unable to stop the running LidMode app safely." >&2
+        exit 1
+    fi
+fi
+
 /usr/bin/sudo /bin/mkdir -p /etc/sudoers.d
 /usr/bin/sudo /usr/bin/install -o root -g wheel -m 755 "$ROOT_STAGING_DIR/lidmode-helper" "$HELPER_TARGET"
 /usr/bin/sudo /usr/bin/install -o root -g wheel -m 440 "$ROOT_STAGING_DIR/lidmode.sudoers" "$SUDOERS_TARGET"

@@ -5,7 +5,10 @@ import XCTest
 
 final class PrivilegedHelperTests: XCTestCase {
   func testIdentifiersAreFixedAndDistinct() {
-    XCTAssertEqual(HelperConstants.appIdentifier, "app.lidmode.LidMode")
+    XCTAssertEqual(
+      HelperConstants.appIdentifier,
+      "io.github.2394826867zhu-stack.LidMode"
+    )
     XCTAssertEqual(HelperConstants.helperIdentifier, "app.lidmode.PrivilegedHelper")
     XCTAssertEqual(HelperConstants.machServiceName, HelperConstants.helperIdentifier)
     XCTAssertNotEqual(HelperConstants.appIdentifier, HelperConstants.helperIdentifier)

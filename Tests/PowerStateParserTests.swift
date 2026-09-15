@@ -44,4 +44,25 @@ final class PowerStateParserTests: XCTestCase {
     XCTAssertEqual(PowerState(helperOutput: "NORMAL\n"), .normal)
     XCTAssertEqual(PowerState(helperOutput: "AWAKE extra"), .unknown)
   }
+
+  func testEveryDisplayStateHasACompactMenuBarSymbol() {
+    let states: [DisplayState] = [
+      .normal, .awake, .executing, .unknown, .setupRequired, .error("test"),
+    ]
+
+    for state in states {
+      XCTAssertFalse(state.presentation.symbolName.isEmpty)
+      XCTAssertFalse(state.presentation.fallbackTitle.isEmpty)
+      XCTAssertFalse(state.presentation.statusTitle.isEmpty)
+      XCTAssertFalse(state.presentation.accessibilityLabel.isEmpty)
+      XCTAssertFalse(state.presentation.toolTip.isEmpty)
+    }
+  }
+
+  func testNormalAndAwakeUseDistinctMenuBarSymbols() {
+    XCTAssertNotEqual(
+      DisplayState.normal.presentation.symbolName,
+      DisplayState.awake.presentation.symbolName
+    )
+  }
 }

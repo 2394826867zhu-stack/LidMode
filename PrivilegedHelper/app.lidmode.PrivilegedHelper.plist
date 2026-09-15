@@ -4,7 +4,7 @@
 <dict>
 	<key>AssociatedBundleIdentifiers</key>
 	<array>
-		<string>app.lidmode.LidMode</string>
+		<string>io.github.2394826867zhu-stack.LidMode</string>
 	</array>
 	<key>BundleProgram</key>
 	<string>Contents/MacOS/LidModePrivilegedHelper</string>
