@@ -19,6 +19,7 @@ HAD_APP=0
 HAD_HELPER=0
 HAD_SUDOERS=0
 CREATED_LIBEXEC=0
+CREATED_USR_LOCAL=0
 MUTATION_STARTED=0
 
 cleanup() {
@@ -48,6 +49,10 @@ cleanup() {
 
     if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$CREATED_LIBEXEC" -eq 1 ]]; then
         /usr/bin/sudo /bin/rmdir /usr/local/libexec 2>/dev/null || true
+    fi
+
+    if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$CREATED_USR_LOCAL" -eq 1 ]]; then
+        /usr/bin/sudo /bin/rmdir /usr/local 2>/dev/null || true
     fi
 
     if [[ "$ADMIN_READY" -eq 1 && -n "$ROOT_STAGING_DIR" ]]; then
@@ -121,6 +126,10 @@ secure_directory() {
     fi
 }
 
+if [[ ! -d /usr/local ]]; then
+    /usr/bin/sudo /usr/bin/install -d -o root -g wheel -m 755 /usr/local
+    CREATED_USR_LOCAL=1
+fi
 secure_directory /usr/local
 if [[ ! -d /usr/local/libexec ]]; then
     /usr/bin/sudo /usr/bin/install -d -o root -g wheel -m 755 /usr/local/libexec

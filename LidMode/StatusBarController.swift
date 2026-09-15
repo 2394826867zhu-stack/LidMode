@@ -4,6 +4,7 @@ final class StatusBarController: NSObject {
   private let statusItem: NSStatusItem
   private let powerStateService: PowerStateService
   private var isExecuting = false
+  private var currentDisplayState: DisplayState = .unknown
 
   init(powerStateService: PowerStateService) {
     self.powerStateService = powerStateService
@@ -32,6 +33,12 @@ final class StatusBarController: NSObject {
 
   @objc private func statusItemClicked() {
     guard !isExecuting else { return }
+
+    if currentDisplayState == .setupRequired {
+      preparePrivilegedHelper()
+      return
+    }
+
     isExecuting = true
     render(.executing)
 
@@ -46,6 +53,7 @@ final class StatusBarController: NSObject {
 
   private func render(_ state: DisplayState) {
     guard let button = statusItem.button else { return }
+    currentDisplayState = state
 
     switch state {
     case .normal:
@@ -62,10 +70,34 @@ final class StatusBarController: NSObject {
       button.toolTip = "无法读取系统睡眠状态"
     case .setupRequired:
       button.title = "⚠ Setup"
-      button.toolTip = "需要运行 LidMode 安装脚本"
+      button.toolTip = "点击注册签名 Helper，源码构建请运行安装脚本"
     case .error(let message):
       button.title = "⚠ Error"
       button.toolTip = message
+    }
+  }
+
+  private func preparePrivilegedHelper() {
+    isExecuting = true
+    render(.executing)
+
+    powerStateService.preparePrivilegedHelper { [weak self] result in
+      DispatchQueue.main.async {
+        guard let self else { return }
+        self.isExecuting = false
+
+        switch result {
+        case .enabled:
+          self.refresh()
+        case .requiresApproval:
+          self.powerStateService.openPrivilegedHelperSettings()
+          self.render(.setupRequired)
+        case .unavailable:
+          self.render(.setupRequired)
+        case .failed:
+          self.render(.error("无法注册特权 Helper"))
+        }
+      }
     }
   }
 }

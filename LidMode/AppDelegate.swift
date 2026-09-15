@@ -4,10 +4,12 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
   private var statusBarController: StatusBarController?
   private let loginItemService = LoginItemService()
+  private let helperClient = HelperClient()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     if CommandLine.arguments.contains("--unregister-login-item") {
       loginItemService.unregister()
+      helperClient.unregisterPrivilegedHelper()
       NSApp.terminate(nil)
       return
     }

@@ -17,6 +17,17 @@
 		A00000000000000000000108 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000209 /* Assets.xcassets */; };
 		A00000000000000000000109 /* PowerStateParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000211 /* PowerStateParserTests.swift */; };
 		A0000000000000000000010A /* HelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000212 /* HelperTests.swift */; };
+		A0000000000000000000010B /* HelperConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000213 /* HelperConstants.swift */; };
+		A0000000000000000000010C /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000214 /* HelperProtocol.swift */; };
+		A0000000000000000000010D /* CodeSigning.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000215 /* CodeSigning.swift */; };
+		A0000000000000000000010E /* HelperService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000216 /* HelperService.swift */; };
+		A0000000000000000000010F /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000217 /* main.swift */; };
+		A00000000000000000000110 /* HelperConstants.swift in Helper Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000213 /* HelperConstants.swift */; };
+		A00000000000000000000111 /* HelperProtocol.swift in Helper Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000214 /* HelperProtocol.swift */; };
+		A00000000000000000000112 /* CodeSigning.swift in Helper Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000215 /* CodeSigning.swift */; };
+		A00000000000000000000113 /* PowerState.swift in Helper Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000203 /* PowerState.swift */; };
+		A00000000000000000000114 /* LidModePrivilegedHelper in Copy Helper */ = {isa = PBXBuildFile; fileRef = A00000000000000000000219 /* LidModePrivilegedHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A00000000000000000000115 /* PrivilegedHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000021A /* PrivilegedHelperTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -27,7 +38,28 @@
 			remoteGlobalIDString = A00000000000000000000501;
 			remoteInfo = LidMode;
 		};
-/* End PBXContainerItemProxy section */
+		A00000000000000000000302 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000401 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000503;
+			remoteInfo = LidModePrivilegedHelper;
+		};
+	/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A00000000000000000000604 /* Embed Privileged Helper */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				A00000000000000000000114 /* LidModePrivilegedHelper in Copy Helper */,
+			);
+			name = "Embed Privileged Helper";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A00000000000000000000201 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -43,6 +75,14 @@
 		A0000000000000000000020B /* LidModeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LidModeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000211 /* PowerStateParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerStateParserTests.swift; sourceTree = "<group>"; };
 		A00000000000000000000212 /* HelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000213 /* HelperConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperConstants.swift; sourceTree = "<group>"; };
+		A00000000000000000000214 /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
+		A00000000000000000000215 /* CodeSigning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeSigning.swift; sourceTree = "<group>"; };
+		A00000000000000000000216 /* HelperService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperService.swift; sourceTree = "<group>"; };
+		A00000000000000000000217 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A00000000000000000000218 /* app.lidmode.PrivilegedHelper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = app.lidmode.PrivilegedHelper.plist; sourceTree = "<group>"; };
+		A00000000000000000000219 /* LidModePrivilegedHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = LidModePrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0000000000000000000021A /* PrivilegedHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +100,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A00000000000000000000603 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -67,6 +114,8 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000702 /* LidMode */,
+				A00000000000000000000705 /* Shared */,
+				A00000000000000000000706 /* PrivilegedHelper */,
 				A00000000000000000000703 /* Tests */,
 				A00000000000000000000704 /* Products */,
 			);
@@ -93,6 +142,7 @@
 			children = (
 				A00000000000000000000211 /* PowerStateParserTests.swift */,
 				A00000000000000000000212 /* HelperTests.swift */,
+				A0000000000000000000021A /* PrivilegedHelperTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -102,8 +152,29 @@
 			children = (
 				A0000000000000000000020A /* LidMode.app */,
 				A0000000000000000000020B /* LidModeTests.xctest */,
+				A00000000000000000000219 /* LidModePrivilegedHelper */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000705 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000213 /* HelperConstants.swift */,
+				A00000000000000000000214 /* HelperProtocol.swift */,
+				A00000000000000000000215 /* CodeSigning.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000706 /* PrivilegedHelper */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000216 /* HelperService.swift */,
+				A00000000000000000000217 /* main.swift */,
+				A00000000000000000000218 /* app.lidmode.PrivilegedHelper.plist */,
+			);
+			path = PrivilegedHelper;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -116,15 +187,34 @@
 				A00000000000000000000801 /* Sources */,
 				A00000000000000000000601 /* Frameworks */,
 				A00000000000000000000901 /* Resources */,
+				A00000000000000000000604 /* Embed Privileged Helper */,
+				A00000000000000000000902 /* Embed LaunchDaemon Plist */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A00000000000000000000B02 /* PBXTargetDependency */,
 			);
 			name = LidMode;
 			productName = LidMode;
 			productReference = A0000000000000000000020A /* LidMode.app */;
 			productType = "com.apple.product-type.application";
+		};
+		A00000000000000000000503 /* LidModePrivilegedHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000A04 /* Build configuration list for PBXNativeTarget "LidModePrivilegedHelper" */;
+			buildPhases = (
+				A00000000000000000000803 /* Sources */,
+				A00000000000000000000603 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LidModePrivilegedHelper;
+			productName = LidModePrivilegedHelper;
+			productReference = A00000000000000000000219 /* LidModePrivilegedHelper */;
+			productType = "com.apple.product-type.tool";
 		};
 		A00000000000000000000502 /* LidModeTests */ = {
 			isa = PBXNativeTarget;
@@ -174,9 +264,10 @@
 			productRefGroup = A00000000000000000000704 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (
-				A00000000000000000000501 /* LidMode */,
-				A00000000000000000000502 /* LidModeTests */,
+				targets = (
+					A00000000000000000000501 /* LidMode */,
+					A00000000000000000000502 /* LidModeTests */,
+					A00000000000000000000503 /* LidModePrivilegedHelper */,
 			);
 		};
 /* End PBXProject section */
@@ -192,6 +283,25 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		A00000000000000000000902 /* Embed LaunchDaemon Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/PrivilegedHelper/app.lidmode.PrivilegedHelper.plist",
+			);
+			name = "Embed LaunchDaemon Plist";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchDaemons/app.lidmode.PrivilegedHelper.plist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nDESTINATION=\"${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}/Library/LaunchDaemons\"\n/bin/mkdir -p \"${DESTINATION}\"\n/bin/cp \"${SRCROOT}/PrivilegedHelper/app.lidmode.PrivilegedHelper.plist\" \"${DESTINATION}/\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		A00000000000000000000801 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -204,6 +314,22 @@
 				A00000000000000000000105 /* HelperClient.swift in Sources */,
 				A00000000000000000000106 /* LoginItemService.swift in Sources */,
 				A00000000000000000000107 /* Logger.swift in Sources */,
+				A0000000000000000000010B /* HelperConstants.swift in Sources */,
+				A0000000000000000000010C /* HelperProtocol.swift in Sources */,
+				A0000000000000000000010D /* CodeSigning.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000803 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0000000000000000000010E /* HelperService.swift in Sources */,
+				A0000000000000000000010F /* main.swift in Sources */,
+				A00000000000000000000110 /* HelperConstants.swift in Helper Sources */,
+				A00000000000000000000111 /* HelperProtocol.swift in Helper Sources */,
+				A00000000000000000000112 /* CodeSigning.swift in Helper Sources */,
+				A00000000000000000000113 /* PowerState.swift in Helper Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -213,6 +339,7 @@
 			files = (
 				A00000000000000000000109 /* PowerStateParserTests.swift in Sources */,
 				A0000000000000000000010A /* HelperTests.swift in Sources */,
+				A00000000000000000000115 /* PrivilegedHelperTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -223,6 +350,11 @@
 			isa = PBXTargetDependency;
 			target = A00000000000000000000501 /* LidMode */;
 			targetProxy = A00000000000000000000301 /* PBXContainerItemProxy */;
+		};
+		A00000000000000000000B02 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000503 /* LidModePrivilegedHelper */;
+			targetProxy = A00000000000000000000302 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -254,6 +386,7 @@
 		A00000000000000000000C03 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -277,6 +410,7 @@
 		A00000000000000000000C04 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -323,6 +457,36 @@
 			};
 			name = Release;
 		};
+		A00000000000000000000C07 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.lidmode.PrivilegedHelper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A00000000000000000000C08 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.lidmode.PrivilegedHelper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -349,6 +513,15 @@
 			buildConfigurations = (
 				A00000000000000000000C05 /* Debug */,
 				A00000000000000000000C06 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000A04 /* Build configuration list for PBXNativeTarget "LidModePrivilegedHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000C07 /* Debug */,
+				A00000000000000000000C08 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

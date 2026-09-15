@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Select Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Test
+        run: >-
+          xcodebuild test
+          -project LidMode.xcodeproj
+          -scheme LidMode
+          -destination 'platform=macOS,arch=arm64'
+          -derivedDataPath "$RUNNER_TEMP/LidModeTests"
+          CODE_SIGNING_ALLOWED=NO
+      - name: Analyze
+        run: >-
+          xcodebuild analyze
+          -project LidMode.xcodeproj
+          -scheme LidMode
+          -configuration Debug
+          -destination 'platform=macOS,arch=arm64'
+          -derivedDataPath "$RUNNER_TEMP/LidModeAnalyze"
+          CODE_SIGNING_ALLOWED=NO
+      - name: Release build
+        run: >-
+          xcodebuild build
+          -project LidMode.xcodeproj
+          -scheme LidMode
+          -configuration Release
+          -destination 'platform=macOS,arch=arm64'
+          -derivedDataPath "$RUNNER_TEMP/LidModeRelease"
+          CODE_SIGNING_ALLOWED=NO
+      - name: Verify embedded helper
+        run: |
+          set -euo pipefail
+          app="$RUNNER_TEMP/LidModeRelease/Build/Products/Release/LidMode.app"
+          test -x "$app/Contents/MacOS/LidModePrivilegedHelper"
+          plutil -lint "$app/Contents/Library/LaunchDaemons/app.lidmode.PrivilegedHelper.plist"

@@ -12,8 +12,8 @@ It reads and changes the real macOS `SleepDisabled` power-management state. It d
 
 - Apple Silicon MacBook; primary target: MacBook Air M2
 - macOS 13 or later
-- Xcode 15 or later with the license accepted
-- An administrator account for the one-time installation
+- Xcode 15 or later with the license accepted when building from source
+- An administrator account with a password for the source-install fallback
 
 LidMode has no third-party dependencies, network service, analytics, updater, database, or scripting runtime.
 
@@ -21,11 +21,13 @@ LidMode has no third-party dependencies, network service, analytics, updater, da
 
 ```text
 LidMode.app
-    └── /usr/bin/sudo -n /usr/local/libexec/lidmode-helper on|off|status
-                                  └── /usr/bin/pmset
+    ├── signed release → Team-ID-pinned XPC → embedded root helper → /usr/bin/pmset
+    └── source fallback → sudo -n → /usr/local/libexec/lidmode-helper → /usr/bin/pmset
 ```
 
-The GUI runs without root privileges. The installed helper is owned by `root:wheel`, accepts only `on`, `off`, or `status`, and invokes `/usr/bin/pmset` directly without a shell. The sudoers rule grants passwordless access to those three exact command lines only.
+The GUI always runs without root privileges. A Developer ID release uses an embedded `SMAppService` LaunchDaemon and an XPC connection constrained in both directions to LidMode's bundle identifiers and signing Team ID. Authentication fails closed if either process has no Team ID. The helper exposes only status and Boolean state-setting operations, invokes `/usr/bin/pmset` using a fixed absolute path, and verifies the resulting system state.
+
+Ad-hoc source builds cannot activate Apple's signed privileged-helper path. For those builds, the installer provides the original compatibility backend: a `root:wheel` helper accepting only `on`, `off`, or `status`, plus a sudoers rule granting those three exact command lines. The app prefers XPC whenever the signed helper is enabled and never silently falls back after an XPC failure.
 
 The menu bar controller follows `read → modify → verify → render`. An unsuccessful command or mismatched verification never renders a false success state.
 
@@ -47,9 +49,21 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
   build
 ```
 
-Building the app alone does not install privileged files and therefore does not enable toggling yet.
+Building the app produces an app bundle containing the privileged helper and LaunchDaemon property list. An ad-hoc build cannot register that helper and therefore needs the source-install fallback below.
 
-## Install
+## Install a signed release
+
+After a Developer ID release has been published:
+
+1. Download `LidMode-<version>.zip` from GitHub Releases.
+2. Move `LidMode.app` to `/Applications` and launch it.
+3. When `⚠ Setup` appears, click it once.
+4. Approve LidMode under **System Settings → General → Login Items & Extensions**.
+5. Click the status item again. It will read the real state before allowing a toggle.
+
+This path does not install a sudoers rule. It requires a properly signed and notarized release; an ad-hoc local build intentionally cannot impersonate the production helper.
+
+## Install from source
 
 From the repository root:
 
@@ -77,7 +91,7 @@ LidMode has no window or menu. Click its text in the menu bar:
 | `● Awake` | `SleepDisabled = 1`; system sleep is disabled |
 | `…` | A read, change, or verification is running |
 | `? Unknown` | The system state could not be parsed |
-| `⚠ Setup` | The restricted helper is not installed |
+| `⚠ Setup` | No usable helper is available; click to register a signed embedded helper, or use the source installer |
 | `⚠ Error` | The operation or verification failed; hover for a short explanation |
 
 The app reads state on launch, after a click, after modification, and when macOS wakes. It does not poll.
@@ -92,7 +106,7 @@ The command checks the exact install locations, ownership, modes, local app sign
 
 ## Tests
 
-Unit tests cover `SleepDisabled` parsing, whitespace and malformed output, helper output parsing, the command allowlist, and the fixed helper path:
+Unit tests cover `SleepDisabled` parsing, whitespace and malformed output, helper output parsing, the command allowlist, fixed identifiers and paths, and presence of the embedded privileged helper:
 
 ```bash
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
@@ -118,6 +132,7 @@ Do not run the integration test while another process depends on a particular sl
 1. Run `./Scripts/install.sh` and confirm `☾ Normal` or `● Awake` appears without a Dock icon or application window.
 2. Set `☾ Normal`, close the lid, and confirm the Mac sleeps.
 3. Set `● Awake`, start a harmless long-running local task, close the lid, and verify from another device or after reopening that the task continued.
+   Lock the screen first with Control–Command–Q if the Mac will be left unattended.
 4. Return to `☾ Normal`, close the lid, and confirm normal sleep resumes.
 5. Restart macOS and confirm LidMode launches and its displayed state matches `sudo -n /usr/local/libexec/lidmode-helper status`.
 6. Temporarily move the helper aside using an administrator shell, click the status item, and confirm an error is shown without a password prompt or false state. Restore the helper afterward.
@@ -129,7 +144,7 @@ Physical lid behavior must be tested on the target hardware; it cannot be establ
 
 ### `⚠ Setup`
 
-Run `./Scripts/install.sh`. Do not broaden the sudoers rule or grant `NOPASSWD: ALL`.
+For a signed release, click `⚠ Setup` and approve LidMode under **System Settings → General → Login Items & Extensions**. For an ad-hoc source build, run `./Scripts/install.sh`. Do not broaden the sudoers rule or grant `NOPASSWD: ALL`.
 
 ### `⚠ Error`
 
@@ -151,19 +166,35 @@ From the repository root:
 ./Scripts/uninstall.sh
 ```
 
-The script asks for administrator approval, unregisters the login item when possible, stops the app, and removes only these LidMode paths:
+The script asks for administrator approval, unregisters the login item and embedded privileged helper when possible, stops the app, and removes only these compatibility-backend paths plus the app:
 
 - `/Applications/LidMode.app`
 - `/usr/local/libexec/lidmode-helper`
 - `/etc/sudoers.d/lidmode`
 
-LidMode installs no daemon and stores no user database. Uninstalling the app does not silently change the current `SleepDisabled` value; switch to `☾ Normal` before uninstalling if normal sleep is desired.
+The signed helper is managed visibly by macOS under Login Items & Extensions and is unregistered before the app is removed. LidMode stores no user database. Uninstalling does not silently change the current `SleepDisabled` value; switch to `☾ Normal` first if normal sleep is desired.
+
+## Signed releases
+
+`.github/workflows/release.yml` builds the app and embedded helper with the same Developer ID Team, verifies both signatures, submits the app to Apple's notarization service, staples the ticket, and attaches a ZIP to a tag-based GitHub Release. It requires these repository secrets:
+
+- `MACOS_CERTIFICATE`: base64-encoded Developer ID Application `.p12`
+- `MACOS_CERTIFICATE_PASSWORD`
+- `KEYCHAIN_PASSWORD`
+- `DEVELOPMENT_TEAM`
+- `NOTARY_KEY_P8`: base64-encoded App Store Connect API key
+- `NOTARY_KEY_ID`
+- `NOTARY_ISSUER_ID`
+
+After configuring them, pushing a version tag such as `v1.0.0` produces the release. CI independently runs unit tests, a Release build, and embedded-helper packaging checks on every push and pull request.
 
 ## Known limitations
 
 - V1 targets Apple Silicon only.
-- The local build is ad-hoc signed, not notarized for public binary distribution. Build from source on the target Mac.
+- A public binary is not available until the repository owner configures Apple Developer signing secrets and pushes the first version tag.
+- The source installer requires a non-empty administrator password because macOS `sudo` rejects passwordless administrator accounts.
 - macOS can still enforce thermal, low-battery, shutdown, and other hardware safety behavior.
+- LidMode deliberately has no polling-based battery or thermal automation. Do not leave sustained heavy workloads running in a closed bag, and lock the screen before closing the lid when unattended.
 - Login item approval can depend on the macOS version and device-management policy.
 - The app intentionally does not reset the system state when it quits or restarts.
 
@@ -172,8 +203,9 @@ LidMode installs no daemon and stores no user database. Uninstalling the app doe
 - No shell is invoked by the app or helper.
 - All executables and privileged paths are absolute and fixed.
 - The app passes one value from a closed Swift enum; the helper repeats the allowlist check.
-- The helper is not resident and no LaunchDaemon is installed.
+- The production LaunchDaemon is loaded on demand by macOS and accepts only correctly signed LidMode clients. The source fallback is not resident.
+- XPC authentication is fail-closed when a Team ID cannot be established.
 - The app performs no network request and includes no telemetry.
 - The sudoers rule names `on`, `off`, and `status` separately and never grants a shell or `pmset *` access.
 
-See [PRD.md](PRD.md) for the product requirements and [AGENTS.md](AGENTS.md) for repository implementation guidance.
+See [PRD.md](PRD.md) for the product requirements, [AGENTS.md](AGENTS.md) for repository implementation guidance, [SECURITY.md](SECURITY.md) for the threat model, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution.

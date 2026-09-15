@@ -20,6 +20,7 @@ enum PowerStateServiceError: Error, Equatable {
 
 final class PowerStateService {
   typealias StateCompletion = (Result<PowerState, PowerStateServiceError>) -> Void
+  typealias SetupCompletion = (PrivilegedHelperSetupResult) -> Void
 
   private let helperClient: HelperClient
   private let queue = DispatchQueue(label: "app.lidmode.power-state", qos: .userInitiated)
@@ -83,6 +84,16 @@ final class PowerStateService {
     }
   }
 
+  func preparePrivilegedHelper(completion: @escaping SetupCompletion) {
+    queue.async { [helperClient] in
+      completion(helperClient.registerPrivilegedHelper())
+    }
+  }
+
+  func openPrivilegedHelperSettings() {
+    helperClient.openPrivilegedHelperSettings()
+  }
+
   private static func readState(using helperClient: HelperClient) -> Result<
     PowerState, PowerStateServiceError
   > {
@@ -107,6 +118,10 @@ final class PowerStateService {
       .setupRequired
     case .launchFailed:
       .helperFailed
+    case .authenticationUnavailable:
+      .permissionDenied
+    case .timedOut:
+      .helperFailed
     case .nonZeroExit(1):
       .permissionDenied
     case .nonZeroExit(3):
@@ -121,6 +136,10 @@ final class PowerStateService {
     case .helperMissing:
       .setupRequired
     case .launchFailed:
+      .helperFailed
+    case .authenticationUnavailable:
+      .permissionDenied
+    case .timedOut:
       .helperFailed
     case .nonZeroExit(1):
       .permissionDenied

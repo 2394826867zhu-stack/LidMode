@@ -23,4 +23,4 @@ if [[ -e "$HELPER_PATH" || -e "$SUDOERS_PATH" || -e "$APP_PATH" ]]; then
     exit 1
 fi
 
-echo "LidMode was completely removed. No daemon is installed by this project."
+echo "LidMode was completely removed, including its registered privileged helper."
