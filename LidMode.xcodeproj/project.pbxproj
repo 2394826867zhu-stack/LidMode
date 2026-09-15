@@ -1,0 +1,359 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000101 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000201 /* AppDelegate.swift */; };
+		A00000000000000000000102 /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000202 /* StatusBarController.swift */; };
+		A00000000000000000000103 /* PowerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000203 /* PowerState.swift */; };
+		A00000000000000000000104 /* PowerStateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000204 /* PowerStateService.swift */; };
+		A00000000000000000000105 /* HelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000205 /* HelperClient.swift */; };
+		A00000000000000000000106 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000206 /* LoginItemService.swift */; };
+		A00000000000000000000107 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000207 /* Logger.swift */; };
+		A00000000000000000000108 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000209 /* Assets.xcassets */; };
+		A00000000000000000000109 /* PowerStateParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000211 /* PowerStateParserTests.swift */; };
+		A0000000000000000000010A /* HelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000212 /* HelperTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A00000000000000000000301 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000401 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000501;
+			remoteInfo = LidMode;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A00000000000000000000201 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A00000000000000000000202 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
+		A00000000000000000000203 /* PowerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerState.swift; sourceTree = "<group>"; };
+		A00000000000000000000204 /* PowerStateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerStateService.swift; sourceTree = "<group>"; };
+		A00000000000000000000205 /* HelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperClient.swift; sourceTree = "<group>"; };
+		A00000000000000000000206 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
+		A00000000000000000000207 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		A00000000000000000000208 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A00000000000000000000209 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A0000000000000000000020A /* LidMode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LidMode.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0000000000000000000020B /* LidModeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LidModeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000211 /* PowerStateParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerStateParserTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000212 /* HelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00000000000000000000601 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000602 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000000000000000000701 = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000702 /* LidMode */,
+				A00000000000000000000703 /* Tests */,
+				A00000000000000000000704 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00000000000000000000702 /* LidMode */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000201 /* AppDelegate.swift */,
+				A00000000000000000000202 /* StatusBarController.swift */,
+				A00000000000000000000203 /* PowerState.swift */,
+				A00000000000000000000204 /* PowerStateService.swift */,
+				A00000000000000000000205 /* HelperClient.swift */,
+				A00000000000000000000206 /* LoginItemService.swift */,
+				A00000000000000000000207 /* Logger.swift */,
+				A00000000000000000000209 /* Assets.xcassets */,
+				A00000000000000000000208 /* Info.plist */,
+			);
+			path = LidMode;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000703 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000211 /* PowerStateParserTests.swift */,
+				A00000000000000000000212 /* HelperTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000704 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000020A /* LidMode.app */,
+				A0000000000000000000020B /* LidModeTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000000000000000000501 /* LidMode */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000A02 /* Build configuration list for PBXNativeTarget "LidMode" */;
+			buildPhases = (
+				A00000000000000000000801 /* Sources */,
+				A00000000000000000000601 /* Frameworks */,
+				A00000000000000000000901 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LidMode;
+			productName = LidMode;
+			productReference = A0000000000000000000020A /* LidMode.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A00000000000000000000502 /* LidModeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000A03 /* Build configuration list for PBXNativeTarget "LidModeTests" */;
+			buildPhases = (
+				A00000000000000000000802 /* Sources */,
+				A00000000000000000000602 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A00000000000000000000B01 /* PBXTargetDependency */,
+			);
+			name = LidModeTests;
+			productName = LidModeTests;
+			productReference = A0000000000000000000020B /* LidModeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000401 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A00000000000000000000501 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					A00000000000000000000502 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = A00000000000000000000501;
+					};
+				};
+			};
+			buildConfigurationList = A00000000000000000000A01 /* Build configuration list for PBXProject "LidMode" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00000000000000000000701;
+			productRefGroup = A00000000000000000000704 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000000000000000000501 /* LidMode */,
+				A00000000000000000000502 /* LidModeTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000901 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000108 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000801 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000101 /* AppDelegate.swift in Sources */,
+				A00000000000000000000102 /* StatusBarController.swift in Sources */,
+				A00000000000000000000103 /* PowerState.swift in Sources */,
+				A00000000000000000000104 /* PowerStateService.swift in Sources */,
+				A00000000000000000000105 /* HelperClient.swift in Sources */,
+				A00000000000000000000106 /* LoginItemService.swift in Sources */,
+				A00000000000000000000107 /* Logger.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000802 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000109 /* PowerStateParserTests.swift in Sources */,
+				A0000000000000000000010A /* HelperTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A00000000000000000000B01 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000501 /* LidMode */;
+			targetProxy = A00000000000000000000301 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A00000000000000000000C01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A00000000000000000000C02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A00000000000000000000C03 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LidMode/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.lidmode.LidMode;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A00000000000000000000C04 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LidMode/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.lidmode.LidMode;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A00000000000000000000C05 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.lidmode.LidModeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LidMode.app/Contents/MacOS/LidMode";
+			};
+			name = Debug;
+		};
+		A00000000000000000000C06 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.lidmode.LidModeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LidMode.app/Contents/MacOS/LidMode";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00000000000000000000A01 /* Build configuration list for PBXProject "LidMode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000C01 /* Debug */,
+				A00000000000000000000C02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000A02 /* Build configuration list for PBXNativeTarget "LidMode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000C03 /* Debug */,
+				A00000000000000000000C04 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000A03 /* Build configuration list for PBXNativeTarget "LidModeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000C05 /* Debug */,
+				A00000000000000000000C06 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000000000000000000401 /* Project object */;
+}

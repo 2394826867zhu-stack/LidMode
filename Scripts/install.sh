@@ -1,0 +1,171 @@
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+APP_TARGET="/Applications/LidMode.app"
+HELPER_TARGET="/usr/local/libexec/lidmode-helper"
+SUDOERS_TARGET="/etc/sudoers.d/lidmode"
+DEVELOPER_DIR_PATH="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+XCODEBUILD="$DEVELOPER_DIR_PATH/usr/bin/xcodebuild"
+STAGING_DIR="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/lidmode-install.XXXXXX")"
+BACKUP_DIR="$STAGING_DIR/backup"
+BUILD_DIR="$STAGING_DIR/build"
+SUDOERS_FILE="$STAGING_DIR/lidmode.sudoers"
+ROOT_STAGING_DIR=""
+INSTALL_SUCCEEDED=0
+ADMIN_READY=0
+HAD_APP=0
+HAD_HELPER=0
+HAD_SUDOERS=0
+CREATED_LIBEXEC=0
+MUTATION_STARTED=0
+
+cleanup() {
+    if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$MUTATION_STARTED" -eq 1 ]]; then
+        echo "Install failed; restoring the previous installation." >&2
+
+        if [[ "$HAD_APP" -eq 1 ]]; then
+            /usr/bin/sudo /bin/rm -rf "$APP_TARGET"
+            /usr/bin/sudo /usr/bin/ditto "$BACKUP_DIR/LidMode.app" "$APP_TARGET"
+        else
+            /usr/bin/sudo /bin/rm -rf "$APP_TARGET"
+        fi
+
+        if [[ "$HAD_HELPER" -eq 1 ]]; then
+            /usr/bin/sudo /usr/bin/install -o root -g wheel -m 755 "$BACKUP_DIR/lidmode-helper" "$HELPER_TARGET"
+        else
+            /usr/bin/sudo /bin/rm -f "$HELPER_TARGET"
+        fi
+
+        if [[ "$HAD_SUDOERS" -eq 1 ]]; then
+            /usr/bin/sudo /usr/bin/install -o root -g wheel -m 440 "$BACKUP_DIR/lidmode.sudoers" "$SUDOERS_TARGET"
+        else
+            /usr/bin/sudo /bin/rm -f "$SUDOERS_TARGET"
+        fi
+
+    fi
+
+    if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$CREATED_LIBEXEC" -eq 1 ]]; then
+        /usr/bin/sudo /bin/rmdir /usr/local/libexec 2>/dev/null || true
+    fi
+
+    if [[ "$ADMIN_READY" -eq 1 && -n "$ROOT_STAGING_DIR" ]]; then
+        /usr/bin/sudo -n /bin/rm -rf "$ROOT_STAGING_DIR" 2>/dev/null || true
+    fi
+
+    if [[ "$ADMIN_READY" -eq 1 ]]; then
+        /usr/bin/sudo -n /bin/rm -rf "$STAGING_DIR" 2>/dev/null || true
+    else
+        /bin/rm -rf "$STAGING_DIR"
+    fi
+}
+trap cleanup EXIT
+
+if [[ "$(/usr/bin/uname -m)" != "arm64" ]]; then
+    echo "LidMode V1 requires an Apple Silicon Mac." >&2
+    exit 1
+fi
+
+if [[ ! -x "$XCODEBUILD" ]]; then
+    echo "Xcode is required at $DEVELOPER_DIR_PATH." >&2
+    exit 1
+fi
+
+CURRENT_USER="$(/usr/bin/id -un)"
+if [[ ! "$CURRENT_USER" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "Unsupported account name for sudoers: $CURRENT_USER" >&2
+    exit 1
+fi
+
+/bin/mkdir -p "$BACKUP_DIR" "$BUILD_DIR"
+
+echo "Building LidMode.app..."
+DEVELOPER_DIR="$DEVELOPER_DIR_PATH" "$XCODEBUILD" \
+    -project "$PROJECT_ROOT/LidMode.xcodeproj" \
+    -scheme LidMode \
+    -destination "platform=macOS,arch=arm64" \
+    -configuration Release \
+    -derivedDataPath "$BUILD_DIR/DerivedData" \
+    CODE_SIGNING_ALLOWED=NO \
+    build
+
+BUILT_APP="$BUILD_DIR/DerivedData/Build/Products/Release/LidMode.app"
+if [[ ! -d "$BUILT_APP" ]]; then
+    echo "Build did not produce LidMode.app." >&2
+    exit 1
+fi
+
+echo "Building restricted helper..."
+DEVELOPER_DIR="$DEVELOPER_DIR_PATH" "$PROJECT_ROOT/Helper/build-helper.sh" "$BUILD_DIR/lidmode-helper"
+
+/usr/bin/printf '%s ALL=(root) NOPASSWD: %s on, %s off, %s status\n' \
+    "$CURRENT_USER" "$HELPER_TARGET" "$HELPER_TARGET" "$HELPER_TARGET" > "$SUDOERS_FILE"
+/bin/chmod 440 "$SUDOERS_FILE"
+/usr/sbin/visudo -cf "$SUDOERS_FILE"
+HELPER_SHA256="$(/usr/bin/shasum -a 256 "$BUILD_DIR/lidmode-helper" | /usr/bin/awk '{print $1}')"
+SUDOERS_SHA256="$(/usr/bin/shasum -a 256 "$SUDOERS_FILE" | /usr/bin/awk '{print $1}')"
+
+echo "Administrator approval is needed once to install the app, helper, and restricted sudoers rule."
+/usr/bin/sudo -v
+ADMIN_READY=1
+
+secure_directory() {
+    local directory="$1"
+    local owner mode
+    owner="$(/usr/bin/stat -f '%Su' "$directory")"
+    mode="$(/usr/bin/stat -f '%Lp' "$directory")"
+    if [[ "$owner" != "root" || $((8#$mode & 8#22)) -ne 0 ]]; then
+        echo "Refusing to install into insecure directory: $directory ($owner, mode $mode)" >&2
+        exit 1
+    fi
+}
+
+secure_directory /usr/local
+if [[ ! -d /usr/local/libexec ]]; then
+    /usr/bin/sudo /usr/bin/install -d -o root -g wheel -m 755 /usr/local/libexec
+    CREATED_LIBEXEC=1
+fi
+secure_directory /usr/local/libexec
+
+if [[ -d "$APP_TARGET" ]]; then
+    HAD_APP=1
+    /usr/bin/sudo /usr/bin/ditto "$APP_TARGET" "$BACKUP_DIR/LidMode.app"
+fi
+if [[ -e "$HELPER_TARGET" ]]; then
+    HAD_HELPER=1
+    /usr/bin/sudo /bin/cp -p "$HELPER_TARGET" "$BACKUP_DIR/lidmode-helper"
+fi
+if [[ -e "$SUDOERS_TARGET" ]]; then
+    HAD_SUDOERS=1
+    /usr/bin/sudo /bin/cp -p "$SUDOERS_TARGET" "$BACKUP_DIR/lidmode.sudoers"
+fi
+
+ROOT_STAGING_DIR="$(/usr/bin/sudo /usr/bin/mktemp -d /private/tmp/lidmode-root.XXXXXX)"
+/usr/bin/sudo /usr/bin/install -o root -g wheel -m 755 "$BUILD_DIR/lidmode-helper" "$ROOT_STAGING_DIR/lidmode-helper"
+/usr/bin/sudo /usr/bin/install -o root -g wheel -m 440 "$SUDOERS_FILE" "$ROOT_STAGING_DIR/lidmode.sudoers"
+
+ROOT_HELPER_SHA256="$(/usr/bin/sudo /usr/bin/shasum -a 256 "$ROOT_STAGING_DIR/lidmode-helper" | /usr/bin/awk '{print $1}')"
+ROOT_SUDOERS_SHA256="$(/usr/bin/sudo /usr/bin/shasum -a 256 "$ROOT_STAGING_DIR/lidmode.sudoers" | /usr/bin/awk '{print $1}')"
+if [[ "$ROOT_HELPER_SHA256" != "$HELPER_SHA256" || "$ROOT_SUDOERS_SHA256" != "$SUDOERS_SHA256" ]]; then
+    echo "Staged privileged files failed integrity verification." >&2
+    exit 1
+fi
+/usr/bin/sudo /usr/sbin/visudo -cf "$ROOT_STAGING_DIR/lidmode.sudoers"
+
+MUTATION_STARTED=1
+/usr/bin/sudo /bin/mkdir -p /etc/sudoers.d
+/usr/bin/sudo /usr/bin/install -o root -g wheel -m 755 "$ROOT_STAGING_DIR/lidmode-helper" "$HELPER_TARGET"
+/usr/bin/sudo /usr/bin/install -o root -g wheel -m 440 "$ROOT_STAGING_DIR/lidmode.sudoers" "$SUDOERS_TARGET"
+/usr/bin/sudo /usr/sbin/visudo -cf "$SUDOERS_TARGET"
+
+/usr/bin/sudo /bin/rm -rf "$APP_TARGET"
+/usr/bin/sudo /usr/bin/ditto "$BUILT_APP" "$APP_TARGET"
+/usr/bin/sudo /usr/sbin/chown -R root:wheel "$APP_TARGET"
+/usr/bin/sudo /usr/bin/codesign --force --deep --sign - "$APP_TARGET"
+
+"$SCRIPT_DIR/verify-install.sh"
+
+INSTALL_SUCCEEDED=1
+echo "LidMode installed successfully. Launching the menu bar app..."
+/usr/bin/open "$APP_TARGET"
