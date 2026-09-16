@@ -22,10 +22,10 @@ final class PowerStateService {
   typealias StateCompletion = (Result<PowerState, PowerStateServiceError>) -> Void
   typealias SetupCompletion = (PrivilegedHelperSetupResult) -> Void
 
-  private let helperClient: HelperClient
+  private let helperClient: HelperClientProtocol
   private let queue = DispatchQueue(label: "app.lidmode.power-state", qos: .userInitiated)
 
-  init(helperClient: HelperClient = HelperClient()) {
+  init(helperClient: HelperClientProtocol = HelperClient()) {
     self.helperClient = helperClient
   }
 
@@ -94,7 +94,7 @@ final class PowerStateService {
     helperClient.openPrivilegedHelperSettings()
   }
 
-  private static func readState(using helperClient: HelperClient) -> Result<
+  private static func readState(using helperClient: HelperClientProtocol) -> Result<
     PowerState, PowerStateServiceError
   > {
     switch helperClient.execute(.status) {

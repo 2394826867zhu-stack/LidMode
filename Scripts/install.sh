@@ -24,8 +24,13 @@ MUTATION_STARTED=0
 APP_WAS_RUNNING=0
 
 cleanup() {
+    set +e
     if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$MUTATION_STARTED" -eq 1 ]]; then
         echo "Install failed; restoring the previous installation." >&2
+
+        if /usr/bin/pgrep -f '^/Applications/LidMode\.app/Contents/MacOS/LidMode$' >/dev/null; then
+            /usr/bin/pkill -TERM -f '^/Applications/LidMode\.app/Contents/MacOS/LidMode$'
+        fi
 
         if [[ "$HAD_APP" -eq 1 ]]; then
             /usr/bin/sudo /bin/rm -rf "$APP_TARGET"
@@ -194,8 +199,17 @@ fi
 /usr/bin/sudo /usr/sbin/chown -R root:wheel "$APP_TARGET"
 /usr/bin/sudo /usr/bin/codesign --force --deep --sign - "$APP_TARGET"
 
-"$SCRIPT_DIR/verify-install.sh"
+EXPECTED_HELPER_SHA256="$HELPER_SHA256" "$SCRIPT_DIR/verify-install.sh"
+
+echo "Launching LidMode and confirming that the installed process remains active..."
+/usr/bin/open "$APP_TARGET"
+for _ in {1..30}; do
+    if /usr/bin/pgrep -f '^/Applications/LidMode\.app/Contents/MacOS/LidMode$' >/dev/null; then
+        break
+    fi
+    /bin/sleep 0.1
+done
+EXPECTED_HELPER_SHA256="$HELPER_SHA256" "$SCRIPT_DIR/verify-install.sh" --require-running
 
 INSTALL_SUCCEEDED=1
-echo "LidMode installed successfully. Launching the menu bar app..."
-/usr/bin/open "$APP_TARGET"
+echo "LidMode installed successfully and is running in the menu bar."

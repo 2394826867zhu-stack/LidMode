@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import ServiceManagement
 
@@ -31,8 +32,16 @@ struct HelperResponse: Equatable {
   let standardError: String
 }
 
-final class HelperClient {
+protocol HelperClientProtocol {
+  func execute(_ command: HelperCommand) -> Result<HelperResponse, HelperClientError>
+  func registerPrivilegedHelper() -> PrivilegedHelperSetupResult
+  func openPrivilegedHelperSettings()
+  func unregisterPrivilegedHelper() -> Bool
+}
+
+final class HelperClient: HelperClientProtocol {
   static let helperPath = "/usr/local/libexec/lidmode-helper"
+  static let commandTimeout: TimeInterval = 5
 
   private let fileManager: FileManager
 
@@ -79,9 +88,15 @@ final class HelperClient {
     SMAppService.openSystemSettingsLoginItems()
   }
 
-  func unregisterPrivilegedHelper() {
-    guard privilegedService.status != .notRegistered else { return }
-    try? privilegedService.unregister()
+  func unregisterPrivilegedHelper() -> Bool {
+    guard privilegedService.status != .notRegistered else { return true }
+    do {
+      try privilegedService.unregister()
+      return true
+    } catch {
+      AppLog.lifecycle.error("Privileged helper unregistration failed")
+      return false
+    }
   }
 
   private var privilegedService: SMAppService {
@@ -95,20 +110,43 @@ final class HelperClient {
       return .failure(.helperMissing)
     }
 
+    return Self.runProcess(
+      executableURL: URL(fileURLWithPath: "/usr/bin/sudo"),
+      arguments: ["-n", Self.helperPath, command.rawValue],
+      timeout: Self.commandTimeout
+    )
+  }
+
+  static func runProcess(
+    executableURL: URL,
+    arguments: [String],
+    timeout: TimeInterval
+  ) -> Result<HelperResponse, HelperClientError> {
     let process = Process()
     let standardOutput = Pipe()
     let standardError = Pipe()
-    process.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
-    process.arguments = ["-n", Self.helperPath, command.rawValue]
+    let exited = DispatchSemaphore(value: 0)
+
+    process.executableURL = executableURL
+    process.arguments = arguments
     process.standardOutput = standardOutput
     process.standardError = standardError
     process.environment = ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin"]
+    process.terminationHandler = { _ in exited.signal() }
 
     do {
       try process.run()
-      process.waitUntilExit()
     } catch {
       return .failure(.launchFailed)
+    }
+
+    guard exited.wait(timeout: .now() + timeout) == .success else {
+      process.terminate()
+      if exited.wait(timeout: .now() + 1) != .success {
+        Darwin.kill(process.processIdentifier, SIGKILL)
+        process.waitUntilExit()
+      }
+      return .failure(.timedOut)
     }
 
     let output =
@@ -126,11 +164,7 @@ final class HelperClient {
       return .failure(.nonZeroExit(process.terminationStatus))
     }
 
-    return .success(
-      HelperResponse(
-        standardOutput: output,
-        standardError: errorOutput
-      ))
+    return .success(HelperResponse(standardOutput: output, standardError: errorOutput))
   }
 
   private func executeUsingXPC(

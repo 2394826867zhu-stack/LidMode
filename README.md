@@ -25,7 +25,7 @@ LidMode.app
     └── source fallback → sudo -n → /usr/local/libexec/lidmode-helper → /usr/bin/pmset
 ```
 
-The GUI always runs without root privileges. A Developer ID release uses an embedded `SMAppService` LaunchDaemon and an XPC connection constrained in both directions to LidMode's bundle identifiers and signing Team ID. Authentication fails closed if either process has no Team ID. The helper exposes only status and Boolean state-setting operations, invokes `/usr/bin/pmset` using a fixed absolute path, and verifies the resulting system state.
+The GUI always runs without root privileges. A Developer ID release uses an embedded `SMAppService` LaunchDaemon and an XPC connection constrained in both directions to LidMode's bundle identifiers and signing Team ID. Authentication fails closed if either process has no Team ID. The helper exposes only status and Boolean state-setting operations, invokes `/usr/bin/pmset` using a fixed absolute path, verifies the resulting system state, and exits after its last connection has remained closed for an idle grace period.
 
 Ad-hoc source builds cannot activate Apple's signed privileged-helper path. For those builds, the installer provides the original compatibility backend: a `root:wheel` helper accepting only `on`, `off`, or `status`, plus a sudoers rule granting those three exact command lines. The app prefers XPC whenever the signed helper is enabled and never silently falls back after an XPC failure.
 
@@ -77,7 +77,7 @@ The script builds the app and helper before requesting administrator approval. T
 - `/usr/local/libexec/lidmode-helper`, mode `755`, owner `root:wheel`
 - `/etc/sudoers.d/lidmode`, mode `440`, owner `root:wheel`
 
-It validates the sudoers syntax with `visudo`, verifies the installed permissions and signature, and confirms that `sudo -n ... status` works. If a privileged installation step fails, the script restores the previous LidMode installation or removes the partial new installation.
+It validates the sudoers syntax and exact three-command policy, verifies application identity, agent-only mode, permissions, signature, and helper integrity, confirms that `sudo -n ... status` works, then launches the app and confirms that the installed process remains active. If a privileged installation step fails, the script restores the previous LidMode installation or removes the partial new installation.
 
 After installation, the app starts and registers itself as a login item with `SMAppService`. Depending on macOS policy, Login Items may show a system notification or require approval in **System Settings → General → Login Items**. Failure to register does not affect the toggle while the app is running.
 
@@ -102,11 +102,11 @@ The app reads state on launch, after a click, after modification, and when macOS
 ./Scripts/verify-install.sh
 ```
 
-The command checks the exact install locations, ownership, modes, local app signature, passwordless helper access, and normalized state output.
+For a source installation, the command checks the exact install locations, ownership, modes, bundle identity, `LSUIElement`, local app signature, helper argument rejection, exact sudoers policy, passwordless helper access, and normalized state output. Reading the root-owned sudoers file requires administrator approval.
 
 ## Tests
 
-Unit tests cover `SleepDisabled` parsing, whitespace and malformed output, helper output parsing, the command allowlist, fixed identifiers and paths, and presence of the embedded privileged helper:
+Unit tests cover `SleepDisabled` parsing, whitespace, truncated and malformed output, helper output parsing, the command allowlist, process timeout handling, the read-modify-verify state machine, failure recovery, fixed identifiers and paths, and presence of the embedded privileged helper:
 
 ```bash
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
@@ -170,13 +170,13 @@ From the repository root:
 ./Scripts/uninstall.sh
 ```
 
-The script asks for administrator approval, unregisters the login item and embedded privileged helper when possible, stops the app, and removes only these compatibility-backend paths plus the app:
+The script asks for administrator approval first, restores and verifies normal sleep, unregisters the login item and embedded privileged helper, stops only the executable at the installed LidMode path, and transactionally moves the following files out of place before deleting them:
 
 - `/Applications/LidMode.app`
 - `/usr/local/libexec/lidmode-helper`
 - `/etc/sudoers.d/lidmode`
 
-The signed helper is managed visibly by macOS under Login Items & Extensions and is unregistered before the app is removed. LidMode stores no user database. Uninstalling does not silently change the current `SleepDisabled` value; switch to `☾ Normal` first if normal sleep is desired.
+The signed helper is managed visibly by macOS under Login Items & Extensions and is unregistered before the app is removed. If a file operation fails, moved files are restored. LidMode stores no user database. Uninstall intentionally returns `SleepDisabled` to `0` so removing the recovery mechanism can never leave the Mac stuck in Awake mode.
 
 ## Signed releases
 
@@ -200,7 +200,7 @@ After configuring them, pushing a version tag such as `v1.0.0` produces the rele
 - macOS can still enforce thermal, low-battery, shutdown, and other hardware safety behavior.
 - LidMode deliberately has no polling-based battery or thermal automation. Do not leave sustained heavy workloads running in a closed bag, and lock the screen before closing the lid when unattended.
 - Login item approval can depend on the macOS version and device-management policy.
-- The app intentionally does not reset the system state when it quits or restarts.
+- The app intentionally does not reset the system state when it quits or restarts. Complete uninstall is different: it always restores normal sleep before removing the helpers.
 
 ## Security notes
 
@@ -212,4 +212,4 @@ After configuring them, pushing a version tag such as `v1.0.0` produces the rele
 - The app performs no network request and includes no telemetry.
 - The sudoers rule names `on`, `off`, and `status` separately and never grants a shell or `pmset *` access.
 
-See [PRD.md](PRD.md) for the product requirements, [AGENTS.md](AGENTS.md) for repository implementation guidance, [SECURITY.md](SECURITY.md) for the threat model, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution.
+See [PRD.md](PRD.md) for the product requirements, [AUDIT.md](AUDIT.md) for the evidence-backed audit and remediation record, [AGENTS.md](AGENTS.md) for repository implementation guidance, [SECURITY.md](SECURITY.md) for the threat model, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution.

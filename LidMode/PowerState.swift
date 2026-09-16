@@ -36,11 +36,13 @@ enum PowerState: Equatable {
         of: #"(?im)^Currently in use:\s*$"#,
         options: .regularExpression
       ) != nil
-    let hasKnownPowerSetting =
-      pmsetOutput.range(
-        of: #"(?im)^\s*(sleep|displaysleep|ttyskeepawake)\s+\d+"#,
-        options: .regularExpression
-      ) != nil
+    let knownSettingPattern =
+      #"(?im)^\s*(sleep|displaysleep|ttyskeepawake|standby|hibernatemode)\s+\d+"#
+    let knownSettingCount =
+      (try? NSRegularExpression(pattern: knownSettingPattern))?.numberOfMatches(
+        in: pmsetOutput,
+        range: NSRange(pmsetOutput.startIndex..., in: pmsetOutput)
+      ) ?? 0
     let containsMalformedSleepDisabled =
       pmsetOutput.range(
         of: #"(?im)^\s*SleepDisabled\b"#,
@@ -48,7 +50,7 @@ enum PowerState: Equatable {
       ) != nil
 
     self =
-      hasHeader && hasCurrentSettings && hasKnownPowerSetting && !containsMalformedSleepDisabled
+      hasHeader && hasCurrentSettings && knownSettingCount >= 2 && !containsMalformedSleepDisabled
       ? .normal
       : .unknown
   }

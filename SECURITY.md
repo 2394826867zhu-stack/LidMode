@@ -2,7 +2,8 @@
 
 ## Privileged boundary
 
-LidMode supports two mutually exclusive privileged transports:
+LidMode supports two privileged transports. The signed XPC transport is preferred
+whenever its service is enabled; the source-install transport is the compatibility fallback:
 
 1. Developer ID releases use an `SMAppService` LaunchDaemon. Both sides require
    the expected bundle identifier and the same Apple Developer Team ID before
@@ -14,6 +15,10 @@ Both helpers execute `/usr/bin/pmset` directly with fixed arguments. Neither
 accepts an executable path, shell fragment, environment-derived command, or
 arbitrary argument. A state change is successful only after `pmset -g` reports
 the requested state.
+
+Every child-process invocation has a finite timeout. The signed helper exits after its last XPC
+connection has remained closed for an idle grace period, so no privileged process is intentionally
+kept resident while the app is idle.
 
 ## Reporting a vulnerability
 
@@ -27,3 +32,7 @@ published, use GitHub's private vulnerability reporting feature when available.
 Awake mode can consume battery and generate heat while the lid is closed. Lock
 the screen before leaving the Mac unattended, do not run sustained heavy work
 inside a closed bag, and return to `☾ Normal` when the task finishes.
+
+The uninstaller always restores and verifies normal sleep before removing the helper. It obtains
+administrator authorization before changing app or login-item state and restores moved files if a
+later removal step fails.

@@ -75,16 +75,26 @@ private struct LidModeHelper {
     let process = Process()
     let outputPipe = Pipe()
     let errorPipe = Pipe()
+    let exited = DispatchSemaphore(value: 0)
     process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
     process.arguments = arguments
     process.standardOutput = outputPipe
     process.standardError = errorPipe
     process.environment = ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin"]
+    process.terminationHandler = { _ in exited.signal() }
 
     do {
       try process.run()
-      process.waitUntilExit()
     } catch {
+      return (HelperExit.pmsetFailed.rawValue, "")
+    }
+
+    guard exited.wait(timeout: .now() + 5) == .success else {
+      process.terminate()
+      if exited.wait(timeout: .now() + 1) != .success {
+        Darwin.kill(process.processIdentifier, SIGKILL)
+        process.waitUntilExit()
+      }
       return (HelperExit.pmsetFailed.rawValue, "")
     }
 

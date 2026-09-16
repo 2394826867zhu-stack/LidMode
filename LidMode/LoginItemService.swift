@@ -13,15 +13,17 @@ final class LoginItemService {
     }
   }
 
-  func unregister() {
+  func unregister() -> Bool {
     let service = SMAppService.mainApp
-    guard service.status != .notRegistered else { return }
+    guard service.status != .notRegistered else { return true }
 
     do {
       try service.unregister()
       AppLog.lifecycle.info("Login item unregistered")
+      return true
     } catch {
       AppLog.lifecycle.error("Login item unregistration failed")
+      return false
     }
   }
 }

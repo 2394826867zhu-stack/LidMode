@@ -1,0 +1,103 @@
+# LidMode Full Audit
+
+Audit date: 2026-09-16  
+Audited commit: `302e6f3`  
+Target: Apple Silicon macOS, with a MacBook Air M2 as the primary acceptance device
+
+## Executive summary
+
+The audited build was a functional MVP, but it was not ready to be described as a completed
+production release. The core `Normal <-> Awake` path worked and the installed compatibility
+helper had the intended narrow sudo authorization. The main release risks were unsafe uninstall
+semantics, incomplete installation verification, no timeout in the compatibility transport, and
+very limited coverage of the production privilege boundary.
+
+Baseline score: **6.5 / 10**
+
+| Area | Baseline |
+| --- | ---: |
+| Architecture | 8.0 |
+| Core toggle behavior | 8.0 |
+| Privilege-boundary design | 7.0 |
+| Code readability | 8.0 |
+| Installation | 6.0 |
+| Uninstallation | 4.0 |
+| Automated-test confidence | 4.5 |
+| Production readiness | 5.5 |
+
+## Evidence collected
+
+- All 15 XCTest cases passed.
+- Xcode static analysis and a Release build passed.
+- Swift formatting, shell syntax, property lists, and repository integrity checks passed.
+- The installed helper completed `NORMAL -> AWAKE -> NORMAL`; the final state was restored to
+  `NORMAL`.
+- The installed sudoers policy allowed exactly `on`, `off`, and `status` during the manual audit,
+  and an injected argument was rejected.
+- The app was idle at approximately 0% CPU, made no network connections, and had no third-party
+  runtime dependencies.
+- The GitHub CI run for the audited commit passed.
+
+Baseline application coverage was 17.54%. `PowerState.swift` reached 89.06%, while
+`PowerStateService.swift`, `LoginItemService.swift`, and the XPC helper service had no effective
+behavioral coverage. `HelperClient.swift` reached only 3.45%.
+
+## Findings and remediation tracking
+
+| ID | Severity | Finding | Status |
+| --- | --- | --- | --- |
+| LM-001 | P1 | Uninstall could remove the recovery mechanism while `SleepDisabled=1` remained active. | Resolved: uninstall restores and verifies Normal first. |
+| LM-002 | P1 | Installation verification did not prove the exact sudoers policy and could report a false PASS. | Resolved: exact policy, identity, mode, integrity, and negative-argument checks added. |
+| LM-003 | P1 | Green tests covered parsers far more than the production privilege and state-machine paths. | Mitigated: application coverage increased from 17.54% to 40.10%; the service reached 76.54%. Signed XPC still needs release acceptance. |
+| LM-004 | P2 | The restricted-sudo transport waited forever if its child process stalled. | Resolved: finite timeout and forced termination added to all process paths. |
+| LM-005 | P2 | Uninstall mutated login state before authorization, killed every process named `LidMode`, and silently ignored privileged-helper unregistration failures. | Resolved: authorization-first flow, exact process targeting, surfaced errors, and file rollback. |
+| LM-006 | P2 | The signed root helper had no explicit idle-exit policy. | Resolved: connection-counted idle exit added. |
+| LM-007 | P2 | The installer reported success without confirming that the installed app remained running. | Resolved: launch and process-liveness gate added before commit. |
+| LM-008 | P3 | The parser's omitted-key fallback accepted a relatively weak approximation of a complete `pmset -g` response. | Resolved: at least two recognized settings are now required; truncated-output test added. |
+| LM-009 | P3 | The release workflow did not exercise a signed SMAppService/XPC round trip. | Partially mitigated: tag releases now rerun tests and verify matching non-empty Team IDs. A real approved XPC round trip remains a manual release gate. |
+
+## Required release gates
+
+1. Uninstall must restore and verify `NORMAL` before removing either helper.
+2. Verification must compare the installed sudoers file with the exact expected policy, validate it
+   with `visudo`, check the application identity and agent-only configuration, and reject invalid
+   helper arguments.
+3. Every synchronous child process must have a finite timeout.
+4. The privileged helper must terminate after an idle grace period.
+5. Tests must exercise the service state machine, failure mapping, timeout path, and packaging
+   invariants.
+6. Installation must confirm that the installed executable remains alive after launch.
+7. A public signed release still requires a real Developer ID build, notarization, and a manual
+   SMAppService/XPC acceptance run on the target Mac.
+
+## Security strengths retained
+
+- No app or helper shell invocation.
+- Fixed absolute executable paths and a closed command set.
+- Root-owned compatibility helper and sudoers policy.
+- Read-modify-verify-render behavior; command exit alone is never treated as success.
+- Team-ID and bundle-identifier checks on both sides of the signed XPC connection.
+- No polling, network service, telemetry, analytics, or third-party runtime.
+
+## Remediation verification
+
+- 23 XCTest cases passed after remediation.
+- Application line coverage increased from 17.54% to 40.10%.
+- `PowerStateService.swift` increased from 0% to 76.54%; its successful toggle path is fully
+  exercised.
+- `HelperClient.runProcess` reached 88.89%, including a real timeout/termination test.
+- Debug and Release builds passed, and Xcode static analysis reported no findings.
+- Swift formatting, shell syntax, property lists, helper allowlist behavior, and diff whitespace
+  checks passed.
+
+Post-remediation assessment: **8.2 / 10**. The remaining material release limitation is the lack of
+a Developer-ID-signed, administrator-approved SMAppService/XPC acceptance run. That cannot be
+truthfully replaced by an ad-hoc CI build.
+
+## Audit limitations
+
+The baseline audit did not include a real Developer ID certificate or notarized build. Therefore it
+could inspect the signed-helper design and packaging, but could not prove the production
+SMAppService approval and XPC round trip. `shellcheck`, `semgrep`, and `gitleaks` were not installed;
+equivalent targeted syntax, source, secret, and command-boundary checks were performed with the
+available native tools.

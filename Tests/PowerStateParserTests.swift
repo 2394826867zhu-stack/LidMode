@@ -31,6 +31,15 @@ final class PowerStateParserTests: XCTestCase {
     XCTAssertEqual(PowerState(pmsetOutput: output), .normal)
   }
 
+  func testTruncatedNormalOutputWithoutSleepDisabledIsUnknown() {
+    let output = """
+      System-wide power settings:
+      Currently in use:
+       sleep                1
+      """
+    XCTAssertEqual(PowerState(pmsetOutput: output), .unknown)
+  }
+
   func testMalformedValueIsUnknown() {
     XCTAssertEqual(PowerState(pmsetOutput: "SleepDisabled 2\n"), .unknown)
   }

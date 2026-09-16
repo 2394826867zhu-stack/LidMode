@@ -1,4 +1,5 @@
 import AppKit
+import Darwin
 
 @main
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -16,10 +17,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     if CommandLine.arguments.contains("--unregister-login-item") {
-      loginItemService.unregister()
-      helperClient.unregisterPrivilegedHelper()
-      NSApp.terminate(nil)
-      return
+      let loginItemRemoved = loginItemService.unregister()
+      let helperRemoved = helperClient.unregisterPrivilegedHelper()
+      Darwin.exit(loginItemRemoved && helperRemoved ? EXIT_SUCCESS : EXIT_FAILURE)
     }
 
     if NSClassFromString("XCTestCase") != nil {
