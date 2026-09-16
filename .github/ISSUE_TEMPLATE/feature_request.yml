@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose a small improvement that preserves LidMode's focused scope
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: LidMode is intentionally a small two-state system toggle. Proposals should directly improve that workflow without turning it into a general power-management suite.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What concrete user problem is not solved today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest change that solves the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: The proposal directly supports the Normal/Awake workflow.
+          required: true
+        - label: The proposal does not require analytics, telemetry, a network service, or a third-party runtime.
+          required: true

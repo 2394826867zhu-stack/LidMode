@@ -1,5 +1,11 @@
 # Security
 
+## Supported versions
+
+Security fixes are maintained on the `main` branch. The latest source version is the only supported
+version until the project establishes a broader release policy. LidMode does not currently publish
+prebuilt public binaries.
+
 ## Privileged boundary
 
 LidMode supports two privileged transports. The signed XPC transport is preferred
@@ -22,10 +28,10 @@ kept resident while the app is idle.
 
 ## Reporting a vulnerability
 
-Do not include secrets, credentials, personal files, or exploit payloads in a
-public issue. Contact the repository owner privately with the affected commit,
-reproduction conditions, and impact. Until a dedicated security contact is
-published, use GitHub's private vulnerability reporting feature when available.
+Do not include secrets, credentials, personal files, or exploit payloads in a public issue. Use
+[GitHub private vulnerability reporting](https://github.com/2394826867zhu-stack/LidMode/security/advisories/new)
+with the affected commit, reproduction conditions, and impact. Allow the maintainer reasonable
+time to investigate and coordinate a fix before public disclosure.
 
 ## Operational safety
 

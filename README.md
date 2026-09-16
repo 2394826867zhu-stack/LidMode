@@ -1,5 +1,22 @@
 # LidMode
 
+<p align="center">
+  <img src="LidMode/Assets.xcassets/AppIcon.appiconset/icon_256.png" width="128" alt="LidMode app icon">
+</p>
+
+<p align="center">
+  A small, native macOS menu bar utility for switching an Apple Silicon MacBook between normal sleep and awake-with-lid-closed modes.
+</p>
+
+<p align="center">
+  <a href="https://github.com/2394826867zhu-stack/LidMode/actions/workflows/ci.yml"><img src="https://github.com/2394826867zhu-stack/LidMode/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/macOS-13%2B-black" alt="macOS 13 or later">
+  <img src="https://img.shields.io/badge/Apple%20Silicon-arm64-blue" alt="Apple Silicon arm64">
+</p>
+
+**English** · [简体中文](README.zh-CN.md)
+
 LidMode is a tiny native macOS menu bar app centered on one system toggle:
 
 ```text
@@ -8,9 +25,35 @@ LidMode is a tiny native macOS menu bar app centered on one system toggle:
 
 It reads and changes the real macOS `SleepDisabled` power-management state. It does not keep a separate preference that can drift away from the system. Current macOS versions omit the `SleepDisabled` line when its value is the default `0`; LidMode recognizes that only when the rest of a complete `pmset -g` response is present. Partial output remains Unknown.
 
+## Highlights
+
+- Native Swift and AppKit; no Electron, background runtime, third-party dependency, analytics, telemetry, or network request.
+- Left-click toggles the verified system state. Right-click opens a compact Settings/Quit menu.
+- Optional launch at login, display-wake assertion, configurable low-battery protection, and three menu-bar text modes.
+- The GUI never runs as root. Privileged operations are restricted to `on`, `off`, and `status` through a root-owned helper.
+- Event-driven rather than polling. On the reference 16 GB M2 system, a 30-second idle sample measured 0.0% CPU and about 25 MB physical footprint.
+
+## Quick start
+
+LidMode currently provides source installation only. Clone the repository on an Apple Silicon Mac with Xcode installed:
+
+```bash
+git clone https://github.com/2394826867zhu-stack/LidMode.git
+cd LidMode
+./Scripts/install.sh
+```
+
+The installer builds locally, asks for administrator approval once, verifies every installed component, and launches LidMode in the menu bar. Return to **Normal** before putting a running MacBook in a bag; Awake mode can continue consuming battery and generating heat with the lid closed.
+
+To remove LidMode completely and restore normal sleep first:
+
+```bash
+./Scripts/uninstall.sh
+```
+
 ## Requirements
 
-- Apple Silicon MacBook; primary target: MacBook Air M2
+- Apple Silicon MacBook; tested primarily on M2 hardware
 - macOS 13 or later
 - Xcode 15 or later with the license accepted when building from source
 - An administrator account with a password for the source-install fallback
@@ -50,18 +93,6 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
 ```
 
 Building the app produces an app bundle containing the privileged helper and LaunchDaemon property list. An ad-hoc build cannot register that helper and therefore needs the source-install fallback below.
-
-## Install a signed release
-
-After a Developer ID release has been published:
-
-1. Download `LidMode-<version>.zip` from GitHub Releases.
-2. Move `LidMode.app` to `/Applications` and launch it.
-3. When `⚠ Setup` appears, click it once.
-4. Approve LidMode under **System Settings → General → Login Items & Extensions**.
-5. Click the status item again. It will read the real state before allowing a toggle.
-
-This path does not install a sudoers rule. It requires a properly signed and notarized release; an ad-hoc local build intentionally cannot impersonate the production helper.
 
 ## Install from source
 
@@ -202,24 +233,10 @@ The script asks for administrator approval first, restores and verifies normal s
 
 The signed helper is managed visibly by macOS under Login Items & Extensions and is unregistered before the app is removed. If a file operation fails, moved files are restored. LidMode stores no user database. Uninstall intentionally returns `SleepDisabled` to `0` so removing the recovery mechanism can never leave the Mac stuck in Awake mode.
 
-## Signed releases
-
-`.github/workflows/release.yml` builds the app and embedded helper with the same Developer ID Team, verifies both signatures, submits the app to Apple's notarization service, staples the ticket, and attaches a ZIP to a tag-based GitHub Release. It requires these repository secrets:
-
-- `MACOS_CERTIFICATE`: base64-encoded Developer ID Application `.p12`
-- `MACOS_CERTIFICATE_PASSWORD`
-- `KEYCHAIN_PASSWORD`
-- `DEVELOPMENT_TEAM`
-- `NOTARY_KEY_P8`: base64-encoded App Store Connect API key
-- `NOTARY_KEY_ID`
-- `NOTARY_ISSUER_ID`
-
-After configuring them, pushing a version tag such as `v1.0.0` produces the release. CI independently runs unit tests, a Release build, and embedded-helper packaging checks on every push and pull request.
-
 ## Known limitations
 
 - V1 targets Apple Silicon only.
-- A public binary is not available until the repository owner configures Apple Developer signing secrets and pushes the first version tag.
+- No public prebuilt binary is provided. Installation requires Xcode and local compilation, or a share package built by someone the recipient trusts.
 - The source installer requires a non-empty administrator password because macOS `sudo` rejects passwordless administrator accounts.
 - macOS can still enforce thermal, low-battery, shutdown, and other hardware safety behavior.
 - Battery protection depends on LidMode remaining running and on macOS delivering power-source events; it is a recovery aid, not a substitute for hardware safeguards. Do not leave sustained heavy workloads running in a closed bag.
@@ -237,4 +254,4 @@ After configuring them, pushing a version tag such as `v1.0.0` produces the rele
 - The app performs no network request and includes no telemetry.
 - The sudoers rule names `on`, `off`, and `status` separately and never grants a shell or `pmset *` access.
 
-See [PRD.md](PRD.md) for the product requirements, [AUDIT.md](AUDIT.md) for the evidence-backed audit and remediation record, [AGENTS.md](AGENTS.md) for repository implementation guidance, [SECURITY.md](SECURITY.md) for the threat model, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution.
+See [PRD.md](PRD.md) for the product requirements, [AUDIT.md](AUDIT.md) for the evidence-backed audit and remediation record, [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance, [AGENTS.md](AGENTS.md) for repository implementation guidance, [SECURITY.md](SECURITY.md) for the threat model, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution.

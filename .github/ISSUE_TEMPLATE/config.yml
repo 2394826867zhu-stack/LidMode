@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and usage help
+    url: https://github.com/2394826867zhu-stack/LidMode/discussions
+    about: Ask installation and usage questions in GitHub Discussions.
+  - name: Private security report
+    url: https://github.com/2394826867zhu-stack/LidMode/security/advisories/new
+    about: Report vulnerabilities privately. Do not disclose sensitive details in a public issue.
