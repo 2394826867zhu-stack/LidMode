@@ -125,8 +125,110 @@ final class PowerStateServiceTests: XCTestCase {
     wait(for: [completed], timeout: 1)
   }
 
+  func testEnsureNormalDoesNothingWhenAlreadyNormal() {
+    let client = ScriptedHelperClient([.success(response("NORMAL"))])
+    let service = PowerStateService(helperClient: client)
+    let completed = expectation(description: "already normal")
+
+    service.ensureNormal { result in
+      XCTAssertEqual(result, .success(.normal))
+      completed.fulfill()
+    }
+
+    wait(for: [completed], timeout: 1)
+    XCTAssertEqual(client.commands, [.status])
+  }
+
+  func testEnsureNormalTurnsAwakeOffAndVerifies() {
+    let client = ScriptedHelperClient([
+      .success(response("AWAKE")),
+      .success(response("NORMAL")),
+      .success(response("NORMAL")),
+    ])
+    let service = PowerStateService(helperClient: client)
+    let completed = expectation(description: "restore normal")
+
+    service.ensureNormal { result in
+      XCTAssertEqual(result, .success(.normal))
+      completed.fulfill()
+    }
+
+    wait(for: [completed], timeout: 1)
+    XCTAssertEqual(client.commands, [.status, .off, .status])
+  }
+
   private func response(_ output: String) -> HelperResponse {
     HelperResponse(standardOutput: output, standardError: "")
+  }
+}
+
+final class SettingsStoreTests: XCTestCase {
+  private var suiteName = ""
+  private var defaults: UserDefaults!
+
+  override func setUp() {
+    super.setUp()
+    suiteName = "LidModeTests.\(UUID().uuidString)"
+    defaults = UserDefaults(suiteName: suiteName)
+    defaults.removePersistentDomain(forName: suiteName)
+  }
+
+  override func tearDown() {
+    defaults.removePersistentDomain(forName: suiteName)
+    defaults = nil
+    super.tearDown()
+  }
+
+  func testDefaultsMatchSafeProductDefaults() {
+    let store = SettingsStore(defaults: defaults)
+
+    XCTAssertTrue(store.launchAtLogin)
+    XCTAssertFalse(store.keepDisplayAwake)
+    XCTAssertTrue(store.batteryProtectionEnabled)
+    XCTAssertEqual(store.batteryThreshold, 20)
+    XCTAssertEqual(store.menuBarTextMode, .always)
+  }
+
+  func testBatteryThresholdIsClamped() {
+    let store = SettingsStore(defaults: defaults)
+
+    store.batteryThreshold = 1
+    XCTAssertEqual(store.batteryThreshold, 5)
+    store.batteryThreshold = 99
+    XCTAssertEqual(store.batteryThreshold, 50)
+  }
+}
+
+final class BatteryProtectionPolicyTests: XCTestCase {
+  func testProtectsAtOrBelowThresholdOnlyOnBattery() {
+    XCTAssertTrue(
+      BatteryProtectionPolicy.shouldRestoreNormal(
+        snapshot: BatterySnapshot(percentage: 20, isOnBattery: true),
+        enabled: true,
+        threshold: 20
+      )
+    )
+    XCTAssertFalse(
+      BatteryProtectionPolicy.shouldRestoreNormal(
+        snapshot: BatterySnapshot(percentage: 21, isOnBattery: true),
+        enabled: true,
+        threshold: 20
+      )
+    )
+    XCTAssertFalse(
+      BatteryProtectionPolicy.shouldRestoreNormal(
+        snapshot: BatterySnapshot(percentage: 10, isOnBattery: false),
+        enabled: true,
+        threshold: 20
+      )
+    )
+    XCTAssertFalse(
+      BatteryProtectionPolicy.shouldRestoreNormal(
+        snapshot: BatterySnapshot(percentage: 10, isOnBattery: true),
+        enabled: false,
+        threshold: 20
+      )
+    )
   }
 }
 

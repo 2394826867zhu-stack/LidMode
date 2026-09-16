@@ -113,3 +113,30 @@ could inspect the signed-helper design and packaging, but could not prove the pr
 SMAppService approval and XPC round trip. `shellcheck`, `semgrep`, and `gitleaks` were not installed;
 equivalent targeted syntax, source, secret, and command-boundary checks were performed with the
 available native tools.
+
+## Feature expansion review — 2026-09-16
+
+The settings expansion preserves the original privilege boundary and system-state source of truth.
+Preferences control policy and presentation only; they do not replace the verified `pmset` state.
+
+- The context menu is created on demand and ends with Quit. Left-click retains the one-action toggle.
+- Login-item changes use `SMAppService`; no custom LaunchAgent was introduced.
+- The display-wake option uses one scoped `ProcessInfo` activity only while both enabled and Awake,
+  and releases it on Normal and application termination.
+- Battery protection uses the IOKit power-source notification run-loop source, not a timer. It acts
+  only on battery, clamps the threshold to 5%–50%, and calls an idempotent read/disable/verify path.
+- Repeated low-battery notifications are latched, while a new attempt to enter Awake re-evaluates the
+  policy so the protection cannot be bypassed merely by toggling again.
+- The launch-only menu-bar mode compacts to an icon after one eight-second one-shot task. It never
+  removes the status item, preserving access to settings and Quit.
+
+Verification after this change: Debug build passed and all 28 XCTest cases passed with zero failures,
+including new safe-default, threshold-clamping, battery-policy, and idempotent Normal-restoration
+tests. Physical display sleep, login startup, battery notification, and lid behavior remain hardware
+acceptance items rather than claims established by unit tests.
+
+The Release build and Xcode static analysis also passed. The updated source build was installed
+transactionally; both pre-launch and post-launch verification passed, the process remained alive,
+and the independently read system state remained `NORMAL`. A real right-click UI check confirmed the
+visible hierarchy `current state → toggle → Settings → Quit`, with Quit last. No preference was
+changed during that acceptance check.

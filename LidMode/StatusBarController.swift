@@ -3,11 +3,24 @@ import AppKit
 final class StatusBarController: NSObject {
   private let statusItem: NSStatusItem
   private let powerStateService: PowerStateService
+  private let settings: SettingsStore
+  private let onOpenSettings: () -> Void
+  private let onPowerStateChanged: (PowerState) -> Void
   private var isExecuting = false
   private var currentDisplayState: DisplayState = .unknown
+  private var launchTextVisible = true
+  private var launchTextWorkItem: DispatchWorkItem?
 
-  init(powerStateService: PowerStateService) {
+  init(
+    powerStateService: PowerStateService,
+    settings: SettingsStore,
+    onOpenSettings: @escaping () -> Void,
+    onPowerStateChanged: @escaping (PowerState) -> Void
+  ) {
     self.powerStateService = powerStateService
+    self.settings = settings
+    self.onOpenSettings = onOpenSettings
+    self.onPowerStateChanged = onPowerStateChanged
     self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     self.statusItem.autosaveName = "LidModeStatusItem"
     super.init()
@@ -15,9 +28,10 @@ final class StatusBarController: NSObject {
     guard let button = statusItem.button else { return }
     statusItem.isVisible = true
     button.target = self
-    button.action = #selector(statusItemClicked)
-    button.sendAction(on: [.leftMouseUp])
+    button.action = #selector(statusItemClicked(_:))
+    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
     render(.unknown)
+    applySettings()
   }
 
   func refresh() {
@@ -27,12 +41,52 @@ final class StatusBarController: NSObject {
       DispatchQueue.main.async {
         guard let self else { return }
         self.isExecuting = false
-        self.render(result.displayState)
+        self.handle(result)
       }
     }
   }
 
-  @objc private func statusItemClicked() {
+  func applySettings() {
+    launchTextWorkItem?.cancel()
+    launchTextWorkItem = nil
+
+    if settings.menuBarTextMode == .launchOnly {
+      launchTextVisible = true
+      let item = DispatchWorkItem { [weak self] in
+        guard let self else { return }
+        self.launchTextVisible = false
+        self.render(self.currentDisplayState)
+      }
+      launchTextWorkItem = item
+      DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: item)
+    } else {
+      launchTextVisible = true
+    }
+    render(currentDisplayState)
+  }
+
+  @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
+    guard let event = NSApp.currentEvent else { return }
+    if event.type == .rightMouseUp {
+      NSMenu.popUpContextMenu(makeContextMenu(), with: event, for: sender)
+    } else {
+      togglePowerState()
+    }
+  }
+
+  @objc private func toggleFromMenu() {
+    togglePowerState()
+  }
+
+  @objc private func openSettings() {
+    onOpenSettings()
+  }
+
+  @objc private func quit() {
+    NSApp.terminate(nil)
+  }
+
+  private func togglePowerState() {
     guard !isExecuting else { return }
 
     if currentDisplayState == .setupRequired {
@@ -42,14 +96,47 @@ final class StatusBarController: NSObject {
 
     isExecuting = true
     render(.executing)
-
     powerStateService.toggle { [weak self] result in
       DispatchQueue.main.async {
         guard let self else { return }
         self.isExecuting = false
-        self.render(result.displayState)
+        self.handle(result)
       }
     }
+  }
+
+  private func handle(_ result: Result<PowerState, PowerStateServiceError>) {
+    if case .success(let state) = result {
+      onPowerStateChanged(state)
+    }
+    render(result.displayState)
+  }
+
+  private func makeContextMenu() -> NSMenu {
+    let menu = NSMenu()
+    let status = NSMenuItem(
+      title: "当前：\(currentDisplayState.presentation.statusTitle)", action: nil, keyEquivalent: ""
+    )
+    status.isEnabled = false
+    menu.addItem(status)
+
+    let toggleTitle = currentDisplayState == .awake ? "恢复 Normal" : "切换到 Awake"
+    let toggleItem = NSMenuItem(
+      title: toggleTitle, action: #selector(toggleFromMenu), keyEquivalent: "")
+    toggleItem.target = self
+    toggleItem.isEnabled = !isExecuting
+    menu.addItem(toggleItem)
+    menu.addItem(.separator())
+
+    let settingsItem = NSMenuItem(title: "设置…", action: #selector(openSettings), keyEquivalent: ",")
+    settingsItem.target = self
+    menu.addItem(settingsItem)
+    menu.addItem(.separator())
+
+    let quitItem = NSMenuItem(title: "退出 LidMode", action: #selector(quit), keyEquivalent: "q")
+    quitItem.target = self
+    menu.addItem(quitItem)
+    return menu
   }
 
   private func render(_ state: DisplayState) {
@@ -63,21 +150,16 @@ final class StatusBarController: NSObject {
     image?.isTemplate = true
     button.image = image
     button.imagePosition = image == nil ? .noImage : .imageLeading
+
+    let showText = settings.menuBarTextMode == .always || launchTextVisible || image == nil
     button.title =
-      image == nil
-      ? "\(presentation.fallbackTitle) \(presentation.statusTitle)"
-      : presentation.statusTitle
-    button.toolTip = presentation.toolTip
+      showText
+      ? (image == nil
+        ? "\(presentation.fallbackTitle) \(presentation.statusTitle)" : presentation.statusTitle)
+      : ""
+    button.toolTip = "\(presentation.toolTip)；左键切换，右键打开菜单"
     button.setAccessibilityLabel(presentation.accessibilityLabel)
     statusItem.isVisible = true
-
-    DispatchQueue.main.async { [weak self, weak button] in
-      guard let self, let button else { return }
-      let frame = button.window.map { NSStringFromRect($0.frame) } ?? "none"
-      AppLog.lifecycle.info(
-        "Status item rendered; visible=\(self.statusItem.isVisible, privacy: .public), frame=\(frame, privacy: .public)"
-      )
-    }
   }
 
   private func preparePrivilegedHelper() {
@@ -118,51 +200,33 @@ extension DisplayState {
     switch self {
     case .normal:
       DisplayPresentation(
-        symbolName: "moon",
-        fallbackTitle: "☾",
-        statusTitle: "Normal",
-        accessibilityLabel: "LidMode：一般模式",
-        toolTip: "一般模式：合盖将正常休眠"
+        symbolName: "moon", fallbackTitle: "☾", statusTitle: "Normal",
+        accessibilityLabel: "LidMode：一般模式", toolTip: "一般模式：合盖将正常休眠"
       )
     case .awake:
       DisplayPresentation(
-        symbolName: "bolt.fill",
-        fallbackTitle: "●",
-        statusTitle: "Awake",
-        accessibilityLabel: "LidMode：保持唤醒",
-        toolTip: "禁止休眠：合盖后 Mac 将继续运行"
+        symbolName: "bolt.fill", fallbackTitle: "●", statusTitle: "Awake",
+        accessibilityLabel: "LidMode：保持唤醒", toolTip: "禁止休眠：合盖后 Mac 将继续运行"
       )
     case .executing:
       DisplayPresentation(
-        symbolName: "hourglass",
-        fallbackTitle: "…",
-        statusTitle: "Working",
-        accessibilityLabel: "LidMode：正在验证",
-        toolTip: "正在验证系统睡眠状态"
+        symbolName: "hourglass", fallbackTitle: "…", statusTitle: "Working",
+        accessibilityLabel: "LidMode：正在验证", toolTip: "正在验证系统睡眠状态"
       )
     case .unknown:
       DisplayPresentation(
-        symbolName: "questionmark",
-        fallbackTitle: "?",
-        statusTitle: "Unknown",
-        accessibilityLabel: "LidMode：状态未知",
-        toolTip: "无法读取系统睡眠状态"
+        symbolName: "questionmark", fallbackTitle: "?", statusTitle: "Unknown",
+        accessibilityLabel: "LidMode：状态未知", toolTip: "无法读取系统睡眠状态"
       )
     case .setupRequired:
       DisplayPresentation(
-        symbolName: "exclamationmark.triangle.fill",
-        fallbackTitle: "!",
-        statusTitle: "Setup",
-        accessibilityLabel: "LidMode：需要设置",
-        toolTip: "点击注册签名 Helper，源码构建请运行安装脚本"
+        symbolName: "exclamationmark.triangle.fill", fallbackTitle: "!", statusTitle: "Setup",
+        accessibilityLabel: "LidMode：需要设置", toolTip: "点击注册签名 Helper，源码构建请运行安装脚本"
       )
     case .error(let message):
       DisplayPresentation(
-        symbolName: "exclamationmark.triangle.fill",
-        fallbackTitle: "!",
-        statusTitle: "Error",
-        accessibilityLabel: "LidMode：发生错误",
-        toolTip: message
+        symbolName: "exclamationmark.triangle.fill", fallbackTitle: "!", statusTitle: "Error",
+        accessibilityLabel: "LidMode：发生错误", toolTip: message
       )
     }
   }

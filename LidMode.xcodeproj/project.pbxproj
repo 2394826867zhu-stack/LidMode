@@ -28,6 +28,10 @@
 		A00000000000000000000113 /* PowerState.swift in Helper Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000203 /* PowerState.swift */; };
 		A00000000000000000000114 /* LidModePrivilegedHelper in Copy Helper */ = {isa = PBXBuildFile; fileRef = A00000000000000000000219 /* LidModePrivilegedHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A00000000000000000000115 /* PrivilegedHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000021A /* PrivilegedHelperTests.swift */; };
+		A00000000000000000000116 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000021B /* SettingsStore.swift */; };
+		A00000000000000000000117 /* PowerPolicyController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000021C /* PowerPolicyController.swift */; };
+		A00000000000000000000118 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000021D /* SettingsWindowController.swift */; };
+		A00000000000000000000119 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0000000000000000000021E /* IOKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +87,10 @@
 		A00000000000000000000218 /* app.lidmode.PrivilegedHelper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = app.lidmode.PrivilegedHelper.plist; sourceTree = "<group>"; };
 		A00000000000000000000219 /* LidModePrivilegedHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = LidModePrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0000000000000000000021A /* PrivilegedHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperTests.swift; sourceTree = "<group>"; };
+		A0000000000000000000021B /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		A0000000000000000000021C /* PowerPolicyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerPolicyController.swift; sourceTree = "<group>"; };
+		A0000000000000000000021D /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		A0000000000000000000021E /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +98,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A00000000000000000000119 /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +127,7 @@
 				A00000000000000000000706 /* PrivilegedHelper */,
 				A00000000000000000000703 /* Tests */,
 				A00000000000000000000704 /* Products */,
+				A0000000000000000000021E /* IOKit.framework */,
 			);
 			sourceTree = "<group>";
 		};
@@ -130,6 +140,9 @@
 				A00000000000000000000204 /* PowerStateService.swift */,
 				A00000000000000000000205 /* HelperClient.swift */,
 				A00000000000000000000206 /* LoginItemService.swift */,
+				A0000000000000000000021B /* SettingsStore.swift */,
+				A0000000000000000000021C /* PowerPolicyController.swift */,
+				A0000000000000000000021D /* SettingsWindowController.swift */,
 				A00000000000000000000207 /* Logger.swift */,
 				A00000000000000000000209 /* Assets.xcassets */,
 				A00000000000000000000208 /* Info.plist */,
@@ -314,6 +327,9 @@
 				A00000000000000000000105 /* HelperClient.swift in Sources */,
 				A00000000000000000000106 /* LoginItemService.swift in Sources */,
 				A00000000000000000000107 /* Logger.swift in Sources */,
+				A00000000000000000000116 /* SettingsStore.swift in Sources */,
+				A00000000000000000000117 /* PowerPolicyController.swift in Sources */,
+				A00000000000000000000118 /* SettingsWindowController.swift in Sources */,
 				A0000000000000000000010B /* HelperConstants.swift in Sources */,
 				A0000000000000000000010C /* HelperProtocol.swift in Sources */,
 				A0000000000000000000010D /* CodeSigning.swift in Sources */,
@@ -390,7 +406,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -399,7 +415,7 @@
 				INFOPLIST_FILE = LidMode/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "io.github.2394826867zhu-stack.LidMode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -414,7 +430,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -422,7 +438,7 @@
 				INFOPLIST_FILE = LidMode/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "io.github.2394826867zhu-stack.LidMode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

@@ -84,6 +84,45 @@ final class PowerStateService {
     }
   }
 
+  func ensureNormal(completion: @escaping StateCompletion) {
+    queue.async { [helperClient] in
+      let currentResult = Self.readState(using: helperClient)
+      guard case .success(let current) = currentResult else {
+        completion(currentResult)
+        return
+      }
+      guard current == .awake else {
+        completion(current == .normal ? .success(.normal) : .failure(.unreadableState))
+        return
+      }
+
+      AppLog.power.info("Normal state requested by policy")
+      switch helperClient.execute(.off) {
+      case .success:
+        break
+      case .failure(let error):
+        AppLog.power.error("Policy helper failed: \(String(describing: error), privacy: .public)")
+        _ = Self.readState(using: helperClient)
+        completion(.failure(Self.mapToggle(error)))
+        return
+      }
+
+      let verifiedResult = Self.readState(using: helperClient)
+      guard case .success(let verified) = verifiedResult else {
+        completion(verifiedResult)
+        return
+      }
+      guard verified == .normal else {
+        AppLog.power.error("Policy verification mismatch")
+        completion(.failure(.verificationMismatch))
+        return
+      }
+
+      AppLog.power.info("Normal state verified")
+      completion(.success(.normal))
+    }
+  }
+
   func preparePrivilegedHelper(completion: @escaping SetupCompletion) {
     queue.async { [helperClient] in
       completion(helperClient.registerPrivilegedHelper())

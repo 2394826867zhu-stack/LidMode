@@ -1,16 +1,25 @@
 import ServiceManagement
 
 final class LoginItemService {
-  func register() {
+  @discardableResult
+  func register() -> Bool {
     let service = SMAppService.mainApp
-    guard service.status == .notRegistered else { return }
+    guard service.status == .notRegistered else {
+      return service.status == .enabled || service.status == .requiresApproval
+    }
 
     do {
       try service.register()
       AppLog.lifecycle.info("Login item registered")
+      return true
     } catch {
       AppLog.lifecycle.error("Login item registration failed")
+      return false
     }
+  }
+
+  func setEnabled(_ enabled: Bool) -> Bool {
+    enabled ? register() : unregister()
   }
 
   func unregister() -> Bool {

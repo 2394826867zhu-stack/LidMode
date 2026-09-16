@@ -1,6 +1,6 @@
 # LidMode
 
-LidMode is a tiny native macOS menu bar app that exposes one system toggle:
+LidMode is a tiny native macOS menu bar app centered on one system toggle:
 
 ```text
 ☾ Normal  → click →  ● Awake  → click →  ☾ Normal
@@ -29,7 +29,7 @@ The GUI always runs without root privileges. A Developer ID release uses an embe
 
 Ad-hoc source builds cannot activate Apple's signed privileged-helper path. For those builds, the installer provides the original compatibility backend: a `root:wheel` helper accepting only `on`, `off`, or `status`, plus a sudoers rule granting those three exact command lines. The app prefers XPC whenever the signed helper is enabled and never silently falls back after an XPC failure.
 
-The menu bar controller follows `read → modify → verify → render`. An unsuccessful command or mismatched verification never renders a false success state.
+The menu bar controller follows `read → modify → verify → render`. An unsuccessful command or mismatched verification never renders a false success state. Battery protection listens to IOKit power-source change events, and display wake uses a scoped native activity assertion; neither feature introduces a polling loop.
 
 ## Build in Xcode
 
@@ -79,11 +79,11 @@ The script builds the app and helper before requesting administrator approval. T
 
 It validates the sudoers syntax and exact three-command policy, verifies application identity, agent-only mode, permissions, signature, and helper integrity, confirms that `sudo -n ... status` works, then launches the app and confirms that the installed process remains active. If a privileged installation step fails, the script restores the previous LidMode installation or removes the partial new installation.
 
-After installation, the app starts and registers itself as a login item with `SMAppService`. Depending on macOS policy, Login Items may show a system notification or require approval in **System Settings → General → Login Items**. Failure to register does not affect the toggle while the app is running.
+After installation, the app starts and enables its login item with `SMAppService` by default. This can be changed in LidMode settings. Depending on macOS policy, Login Items may show a system notification or require approval in **System Settings → General → Login Items**. Failure to register does not affect the toggle while the app is running.
 
 ## Use
 
-LidMode has no window or menu. Click its text in the menu bar:
+Left-click the menu bar item to switch directly between Normal and Awake. Right-click it for a compact menu containing the current state, the toggle action, Settings, and Quit. Quit is always the final menu item.
 
 | Display | Meaning |
 | --- | --- |
@@ -94,7 +94,14 @@ LidMode has no window or menu. Click its text in the menu bar:
 | `⚠ Setup` | No usable helper is available; click to register a signed embedded helper, or use the source installer |
 | `⚠ Error` | The operation or verification failed; hover for a short explanation |
 
-The app reads state on launch, after a click, after modification, and when macOS wakes. It does not poll.
+The settings window provides:
+
+- Launch at login, enabled by default.
+- Keep the display awake while LidMode is in Awake mode, disabled by default. The assertion is released immediately when returning to Normal or when LidMode exits.
+- Battery protection, enabled by default at 20% and adjustable from 5% to 50%. While running on battery at or below the threshold, LidMode restores and verifies Normal. Protection can be disabled.
+- Menu bar status text shown always, or only for eight seconds after launch before compacting to the icon. The icon itself remains available so the app cannot become inaccessible.
+
+The app reads state on launch, after an action, after modification, and when macOS wakes. Battery changes come from system notifications. It does not poll.
 
 ## Verify an installation
 
@@ -129,14 +136,17 @@ Do not run the integration test while another process depends on a particular sl
 
 ## Manual acceptance on a MacBook Air M2
 
-1. Run `./Scripts/install.sh` and confirm `☾ Normal` or `● Awake` appears without a Dock icon or application window.
-2. Set `☾ Normal`, close the lid, and confirm the Mac sleeps.
-3. Set `● Awake`, start a harmless long-running local task, close the lid, and verify from another device or after reopening that the task continued.
+1. Run `./Scripts/install.sh` and confirm `☾ Normal` or `● Awake` appears without a Dock icon.
+2. Right-click the item, confirm the compact menu opens and `退出 LidMode` is last, then open Settings and verify each control persists.
+3. Set `☾ Normal`, close the lid, and confirm the Mac sleeps.
+4. Set `● Awake`, start a harmless long-running local task, close the lid, and verify from another device or after reopening that the task continued.
    Lock the screen first with Control–Command–Q if the Mac will be left unattended.
-4. Return to `☾ Normal`, close the lid, and confirm normal sleep resumes.
-5. Restart macOS and confirm LidMode launches and its displayed state matches `sudo -n /usr/local/libexec/lidmode-helper status`.
-6. Temporarily move the helper aside using an administrator shell, click the status item, and confirm an error is shown without a password prompt or false state. Restore the helper afterward.
-7. Observe idle CPU and memory in Activity Monitor. CPU should settle near zero with no continuing growth.
+5. Enable display wake, enter Awake, and verify idle display sleep is inhibited; return to Normal and verify the assertion is gone.
+6. Test battery protection at a safe temporary threshold above the current battery percentage while disconnected from power; verify Awake automatically returns to Normal, then restore the desired threshold.
+7. Return to `☾ Normal`, close the lid, and confirm normal sleep resumes.
+8. Restart macOS and confirm LidMode launches and its displayed state matches `sudo -n /usr/local/libexec/lidmode-helper status`.
+9. Temporarily move the helper aside using an administrator shell, click the status item, and confirm an error is shown without a password prompt or false state. Restore the helper afterward.
+10. Observe idle CPU and memory in Activity Monitor. CPU should settle near zero with no continuing growth.
 
 Physical lid behavior must be tested on the target hardware; it cannot be established by unit tests alone.
 
@@ -198,7 +208,8 @@ After configuring them, pushing a version tag such as `v1.0.0` produces the rele
 - A public binary is not available until the repository owner configures Apple Developer signing secrets and pushes the first version tag.
 - The source installer requires a non-empty administrator password because macOS `sudo` rejects passwordless administrator accounts.
 - macOS can still enforce thermal, low-battery, shutdown, and other hardware safety behavior.
-- LidMode deliberately has no polling-based battery or thermal automation. Do not leave sustained heavy workloads running in a closed bag, and lock the screen before closing the lid when unattended.
+- Battery protection depends on LidMode remaining running and on macOS delivering power-source events; it is a recovery aid, not a substitute for hardware safeguards. Do not leave sustained heavy workloads running in a closed bag.
+- “Keep display awake” prevents idle display/system sleep while Awake, but does not override lock-screen, managed-device, shutdown, thermal, or critical-battery policies.
 - Login item approval can depend on the macOS version and device-management policy.
 - The app intentionally does not reset the system state when it quits or restarts. Complete uninstall is different: it always restores normal sleep before removing the helpers.
 
