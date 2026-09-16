@@ -197,6 +197,32 @@ final class SettingsStoreTests: XCTestCase {
     store.batteryThreshold = 99
     XCTAssertEqual(store.batteryThreshold, 50)
   }
+
+  func testAllMenuBarTextModesPersist() {
+    let store = SettingsStore(defaults: defaults)
+
+    for mode in MenuBarTextMode.allCases {
+      store.menuBarTextMode = mode
+      XCTAssertEqual(store.menuBarTextMode, mode)
+    }
+  }
+
+  func testMenuBarTextVisibilityPolicy() {
+    XCTAssertTrue(
+      MenuBarTextMode.always.shouldShowText(transientVisible: false, imageAvailable: true))
+    XCTAssertFalse(
+      MenuBarTextMode.switching.shouldShowText(transientVisible: false, imageAvailable: true)
+    )
+    XCTAssertTrue(
+      MenuBarTextMode.switching.shouldShowText(transientVisible: true, imageAvailable: true)
+    )
+    XCTAssertFalse(
+      MenuBarTextMode.hidden.shouldShowText(transientVisible: true, imageAvailable: true)
+    )
+    XCTAssertTrue(
+      MenuBarTextMode.hidden.shouldShowText(transientVisible: false, imageAvailable: false)
+    )
+  }
 }
 
 final class BatteryProtectionPolicyTests: XCTestCase {

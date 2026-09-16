@@ -99,7 +99,9 @@ The settings window provides:
 - Launch at login, enabled by default.
 - Keep the display awake while LidMode is in Awake mode, disabled by default. The assertion is released immediately when returning to Normal or when LidMode exits.
 - Battery protection, enabled by default at 20% and adjustable from 5% to 50%. While running on battery at or below the threshold, LidMode restores and verifies Normal. Protection can be disabled.
-- Menu bar status text shown always, or only for eight seconds after launch before compacting to the icon. The icon itself remains available so the app cannot become inaccessible.
+- Menu bar status text has three modes: always visible, visible only while switching and for three seconds after verification, or hidden. The icon itself remains available in every mode so the app cannot become inaccessible.
+
+Hover text contains only the current state explanation. Interaction instructions are intentionally kept out of the tooltip.
 
 The app reads state on launch, after an action, after modification, and when macOS wakes. Battery changes come from system notifications. It does not poll.
 

@@ -58,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     batteryProtectionController.onNormalRestored = { [weak self] in
-      self?.statusBarController?.refresh()
+      self?.statusBarController?.refresh(revealText: true)
     }
     batteryProtectionController.start()
     controller.refresh()

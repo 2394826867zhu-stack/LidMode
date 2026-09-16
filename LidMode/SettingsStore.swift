@@ -2,12 +2,23 @@ import Foundation
 
 enum MenuBarTextMode: Int, CaseIterable {
   case always
-  case launchOnly
+  case switching
+  case hidden
 
   var title: String {
     switch self {
     case .always: "始终显示状态文字"
-    case .launchOnly: "仅启动时显示状态文字"
+    case .switching: "仅切换时显示状态文字"
+    case .hidden: "隐藏状态文字"
+    }
+  }
+
+  func shouldShowText(transientVisible: Bool, imageAvailable: Bool) -> Bool {
+    guard imageAvailable else { return true }
+    switch self {
+    case .always: return true
+    case .switching: return transientVisible
+    case .hidden: return false
     }
   }
 }

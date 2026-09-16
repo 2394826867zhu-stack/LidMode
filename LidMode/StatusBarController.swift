@@ -8,8 +8,8 @@ final class StatusBarController: NSObject {
   private let onPowerStateChanged: (PowerState) -> Void
   private var isExecuting = false
   private var currentDisplayState: DisplayState = .unknown
-  private var launchTextVisible = true
-  private var launchTextWorkItem: DispatchWorkItem?
+  private var transientTextVisible = false
+  private var transientTextWorkItem: DispatchWorkItem?
 
   init(
     powerStateService: PowerStateService,
@@ -34,34 +34,22 @@ final class StatusBarController: NSObject {
     applySettings()
   }
 
-  func refresh() {
+  func refresh(revealText: Bool = false) {
     guard !isExecuting else { return }
     isExecuting = true
     powerStateService.readState { [weak self] result in
       DispatchQueue.main.async {
         guard let self else { return }
         self.isExecuting = false
-        self.handle(result)
+        self.handle(result, revealText: revealText)
       }
     }
   }
 
   func applySettings() {
-    launchTextWorkItem?.cancel()
-    launchTextWorkItem = nil
-
-    if settings.menuBarTextMode == .launchOnly {
-      launchTextVisible = true
-      let item = DispatchWorkItem { [weak self] in
-        guard let self else { return }
-        self.launchTextVisible = false
-        self.render(self.currentDisplayState)
-      }
-      launchTextWorkItem = item
-      DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: item)
-    } else {
-      launchTextVisible = true
-    }
+    transientTextWorkItem?.cancel()
+    transientTextWorkItem = nil
+    transientTextVisible = false
     render(currentDisplayState)
   }
 
@@ -95,21 +83,41 @@ final class StatusBarController: NSObject {
     }
 
     isExecuting = true
+    showTransientText()
     render(.executing)
     powerStateService.toggle { [weak self] result in
       DispatchQueue.main.async {
         guard let self else { return }
         self.isExecuting = false
-        self.handle(result)
+        self.handle(result, revealText: true)
       }
     }
   }
 
-  private func handle(_ result: Result<PowerState, PowerStateServiceError>) {
+  private func handle(
+    _ result: Result<PowerState, PowerStateServiceError>,
+    revealText: Bool = false
+  ) {
     if case .success(let state) = result {
       onPowerStateChanged(state)
     }
+    if revealText {
+      showTransientText()
+    }
     render(result.displayState)
+  }
+
+  private func showTransientText() {
+    guard settings.menuBarTextMode == .switching else { return }
+    transientTextWorkItem?.cancel()
+    transientTextVisible = true
+    let item = DispatchWorkItem { [weak self] in
+      guard let self else { return }
+      self.transientTextVisible = false
+      self.render(self.currentDisplayState)
+    }
+    transientTextWorkItem = item
+    DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: item)
   }
 
   private func makeContextMenu() -> NSMenu {
@@ -151,19 +159,23 @@ final class StatusBarController: NSObject {
     button.image = image
     button.imagePosition = image == nil ? .noImage : .imageLeading
 
-    let showText = settings.menuBarTextMode == .always || launchTextVisible || image == nil
+    let showText = settings.menuBarTextMode.shouldShowText(
+      transientVisible: transientTextVisible,
+      imageAvailable: image != nil
+    )
     button.title =
       showText
       ? (image == nil
         ? "\(presentation.fallbackTitle) \(presentation.statusTitle)" : presentation.statusTitle)
       : ""
-    button.toolTip = "\(presentation.toolTip)；左键切换，右键打开菜单"
+    button.toolTip = presentation.toolTip
     button.setAccessibilityLabel(presentation.accessibilityLabel)
     statusItem.isVisible = true
   }
 
   private func preparePrivilegedHelper() {
     isExecuting = true
+    showTransientText()
     render(.executing)
 
     powerStateService.preparePrivilegedHelper { [weak self] result in

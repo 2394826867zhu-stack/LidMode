@@ -127,8 +127,9 @@ Preferences control policy and presentation only; they do not replace the verifi
   only on battery, clamps the threshold to 5%–50%, and calls an idempotent read/disable/verify path.
 - Repeated low-battery notifications are latched, while a new attempt to enter Awake re-evaluates the
   policy so the protection cannot be bypassed merely by toggling again.
-- The launch-only menu-bar mode compacts to an icon after one eight-second one-shot task. It never
-  removes the status item, preserving access to settings and Quit.
+- The original two-state menu-bar text option used a one-shot task and never removed the status
+  item, preserving access to settings and Quit. Version 1.2 replaces this with the audited
+  three-state behavior described below.
 
 Verification after this change: Debug build passed and all 28 XCTest cases passed with zero failures,
 including new safe-default, threshold-clamping, battery-policy, and idempotent Normal-restoration
@@ -140,3 +141,62 @@ transactionally; both pre-launch and post-launch verification passed, the proces
 and the independently read system state remained `NORMAL`. A real right-click UI check confirmed the
 visible hierarchy `current state → toggle → Settings → Quit`, with Quit last. No preference was
 changed during that acceptance check.
+
+## Full audit — version 1.2.0 / build 3
+
+Audit date: 2026-09-16
+
+### Outcome
+
+No new P0, P1, or P2 defect was found after the menu-bar text-mode change. The implementation keeps
+the status icon present in all modes, retains the verified system state as the source of truth, and
+adds no repeating timer, polling loop, network dependency, or privilege expansion.
+
+Current assessment: **8.7 / 10**. The remaining material production limitation is unchanged: a
+public release still needs Developer ID signing, notarization, and a real administrator-approved
+SMAppService/XPC acceptance run. Physical lid, screen-idle, and battery-delivery behavior also remain
+hardware acceptance items.
+
+### Code and behavior review
+
+- The modes are `always`, `switching`, and `hidden`, backed by stable integer values. The previous
+  stored value `1` migrates naturally from launch-only behavior to the new switching-only behavior.
+- Switching-only mode reveals text during a user or battery-protection transition and for three
+  seconds after verification. A single cancelable `DispatchWorkItem` performs the delayed hide; it
+  is not a repeating timer.
+- Hidden mode suppresses text even during switching. If an SF Symbol cannot be created, the fallback
+  title remains visible so the status item cannot collapse into an inaccessible zero-content item.
+- Settings changes cancel any pending text-hide task before rendering the newly selected policy.
+- Hover help now equals the state-specific explanation exactly. The former left-click/right-click
+  instruction suffix is absent.
+- Battery-triggered restoration requests a transient status reveal only in switching-only mode; it
+  does not alter the behavior of always-visible or hidden mode.
+
+### Verification evidence
+
+- 30 XCTest cases passed, with zero failures, skips, warnings, or test errors. New tests cover all
+  three persisted modes and every visibility-policy branch, including the missing-image fallback.
+- Debug compilation, Release compilation, and Xcode static analysis passed. The first local compile
+  exposed a Swift 5 explicit-return error in the new policy function; it was corrected before the
+  successful full matrix and is recorded here rather than omitted.
+- Swift format lint, shell syntax, property-list validation, embedded-helper packaging, and Git diff
+  whitespace checks passed.
+- Targeted secret scanning found no disclosed credential or common embedded-secret assignment.
+- Targeted source scanning found no timer, network client, or socket API. The Release executable
+  links only Apple system frameworks and Swift runtime libraries.
+- Transactional installation passed both pre-launch and post-launch verification. Installed version
+  is `1.2.0` build `3`; the process remained alive at 0.0% CPU and approximately 0.6% memory, with no
+  open network socket observed.
+- Accessibility inspection opened the real settings window and confirmed exactly three options:
+  `始终显示状态文字`, `仅切换时显示状态文字`, and `隐藏状态文字`.
+- A real menu-bar transition confirmed switching-only behavior: `Normal` was visible immediately,
+  the label disappeared after four seconds while the tooltip remained state-specific, `Awake` was
+  visible during the return transition, and the independently read final system state was restored
+  to `NORMAL`.
+
+### Remaining limitations
+
+- The three-second UI transition is covered by policy tests and a real accessibility acceptance run,
+  but not by a long-running automated AppKit UI-test target.
+- Screen locking, managed-device policy, thermal shutdown, and critical-battery behavior remain under
+  macOS control and are intentionally not bypassed.
