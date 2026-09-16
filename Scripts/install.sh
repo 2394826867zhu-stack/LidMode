@@ -23,6 +23,14 @@ CREATED_USR_LOCAL=0
 MUTATION_STARTED=0
 APP_WAS_RUNNING=0
 
+run_sudo() {
+    if [[ -n "${SUDO_ASKPASS:-}" ]]; then
+        /usr/bin/sudo -A "$@"
+    else
+        /usr/bin/sudo "$@"
+    fi
+}
+
 cleanup() {
     set +e
     if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$MUTATION_STARTED" -eq 1 ]]; then
@@ -33,22 +41,22 @@ cleanup() {
         fi
 
         if [[ "$HAD_APP" -eq 1 ]]; then
-            /usr/bin/sudo /bin/rm -rf "$APP_TARGET"
-            /usr/bin/sudo /usr/bin/ditto "$BACKUP_DIR/LidMode.app" "$APP_TARGET"
+            run_sudo /bin/rm -rf "$APP_TARGET"
+            run_sudo /usr/bin/ditto "$BACKUP_DIR/LidMode.app" "$APP_TARGET"
         else
-            /usr/bin/sudo /bin/rm -rf "$APP_TARGET"
+            run_sudo /bin/rm -rf "$APP_TARGET"
         fi
 
         if [[ "$HAD_HELPER" -eq 1 ]]; then
-            /usr/bin/sudo /usr/bin/install -o root -g wheel -m 755 "$BACKUP_DIR/lidmode-helper" "$HELPER_TARGET"
+            run_sudo /usr/bin/install -o root -g wheel -m 755 "$BACKUP_DIR/lidmode-helper" "$HELPER_TARGET"
         else
-            /usr/bin/sudo /bin/rm -f "$HELPER_TARGET"
+            run_sudo /bin/rm -f "$HELPER_TARGET"
         fi
 
         if [[ "$HAD_SUDOERS" -eq 1 ]]; then
-            /usr/bin/sudo /usr/bin/install -o root -g wheel -m 440 "$BACKUP_DIR/lidmode.sudoers" "$SUDOERS_TARGET"
+            run_sudo /usr/bin/install -o root -g wheel -m 440 "$BACKUP_DIR/lidmode.sudoers" "$SUDOERS_TARGET"
         else
-            /usr/bin/sudo /bin/rm -f "$SUDOERS_TARGET"
+            run_sudo /bin/rm -f "$SUDOERS_TARGET"
         fi
 
         if [[ "$APP_WAS_RUNNING" -eq 1 && -d "$APP_TARGET" ]]; then
@@ -58,11 +66,11 @@ cleanup() {
     fi
 
     if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$CREATED_LIBEXEC" -eq 1 ]]; then
-        /usr/bin/sudo /bin/rmdir /usr/local/libexec 2>/dev/null || true
+        run_sudo /bin/rmdir /usr/local/libexec 2>/dev/null || true
     fi
 
     if [[ "$INSTALL_SUCCEEDED" -ne 1 && "$ADMIN_READY" -eq 1 && "$CREATED_USR_LOCAL" -eq 1 ]]; then
-        /usr/bin/sudo /bin/rmdir /usr/local 2>/dev/null || true
+        run_sudo /bin/rmdir /usr/local 2>/dev/null || true
     fi
 
     if [[ "$ADMIN_READY" -eq 1 && -n "$ROOT_STAGING_DIR" ]]; then
@@ -122,7 +130,7 @@ HELPER_SHA256="$(/usr/bin/shasum -a 256 "$BUILD_DIR/lidmode-helper" | /usr/bin/a
 SUDOERS_SHA256="$(/usr/bin/shasum -a 256 "$SUDOERS_FILE" | /usr/bin/awk '{print $1}')"
 
 echo "Administrator approval is needed once to install the app, helper, and restricted sudoers rule."
-/usr/bin/sudo -v
+run_sudo -v
 ADMIN_READY=1
 
 secure_directory() {
@@ -137,40 +145,40 @@ secure_directory() {
 }
 
 if [[ ! -d /usr/local ]]; then
-    /usr/bin/sudo /usr/bin/install -d -o root -g wheel -m 755 /usr/local
+    run_sudo /usr/bin/install -d -o root -g wheel -m 755 /usr/local
     CREATED_USR_LOCAL=1
 fi
 secure_directory /usr/local
 if [[ ! -d /usr/local/libexec ]]; then
-    /usr/bin/sudo /usr/bin/install -d -o root -g wheel -m 755 /usr/local/libexec
+    run_sudo /usr/bin/install -d -o root -g wheel -m 755 /usr/local/libexec
     CREATED_LIBEXEC=1
 fi
 secure_directory /usr/local/libexec
 
 if [[ -d "$APP_TARGET" ]]; then
     HAD_APP=1
-    /usr/bin/sudo /usr/bin/ditto "$APP_TARGET" "$BACKUP_DIR/LidMode.app"
+    run_sudo /usr/bin/ditto "$APP_TARGET" "$BACKUP_DIR/LidMode.app"
 fi
 if [[ -e "$HELPER_TARGET" ]]; then
     HAD_HELPER=1
-    /usr/bin/sudo /bin/cp -p "$HELPER_TARGET" "$BACKUP_DIR/lidmode-helper"
+    run_sudo /bin/cp -p "$HELPER_TARGET" "$BACKUP_DIR/lidmode-helper"
 fi
 if [[ -e "$SUDOERS_TARGET" ]]; then
     HAD_SUDOERS=1
-    /usr/bin/sudo /bin/cp -p "$SUDOERS_TARGET" "$BACKUP_DIR/lidmode.sudoers"
+    run_sudo /bin/cp -p "$SUDOERS_TARGET" "$BACKUP_DIR/lidmode.sudoers"
 fi
 
-ROOT_STAGING_DIR="$(/usr/bin/sudo /usr/bin/mktemp -d /private/tmp/lidmode-root.XXXXXX)"
-/usr/bin/sudo /usr/bin/install -o root -g wheel -m 755 "$BUILD_DIR/lidmode-helper" "$ROOT_STAGING_DIR/lidmode-helper"
-/usr/bin/sudo /usr/bin/install -o root -g wheel -m 440 "$SUDOERS_FILE" "$ROOT_STAGING_DIR/lidmode.sudoers"
+ROOT_STAGING_DIR="$(run_sudo /usr/bin/mktemp -d /private/tmp/lidmode-root.XXXXXX)"
+run_sudo /usr/bin/install -o root -g wheel -m 755 "$BUILD_DIR/lidmode-helper" "$ROOT_STAGING_DIR/lidmode-helper"
+run_sudo /usr/bin/install -o root -g wheel -m 440 "$SUDOERS_FILE" "$ROOT_STAGING_DIR/lidmode.sudoers"
 
-ROOT_HELPER_SHA256="$(/usr/bin/sudo /usr/bin/shasum -a 256 "$ROOT_STAGING_DIR/lidmode-helper" | /usr/bin/awk '{print $1}')"
-ROOT_SUDOERS_SHA256="$(/usr/bin/sudo /usr/bin/shasum -a 256 "$ROOT_STAGING_DIR/lidmode.sudoers" | /usr/bin/awk '{print $1}')"
+ROOT_HELPER_SHA256="$(run_sudo /usr/bin/shasum -a 256 "$ROOT_STAGING_DIR/lidmode-helper" | /usr/bin/awk '{print $1}')"
+ROOT_SUDOERS_SHA256="$(run_sudo /usr/bin/shasum -a 256 "$ROOT_STAGING_DIR/lidmode.sudoers" | /usr/bin/awk '{print $1}')"
 if [[ "$ROOT_HELPER_SHA256" != "$HELPER_SHA256" || "$ROOT_SUDOERS_SHA256" != "$SUDOERS_SHA256" ]]; then
     echo "Staged privileged files failed integrity verification." >&2
     exit 1
 fi
-/usr/bin/sudo /usr/sbin/visudo -cf "$ROOT_STAGING_DIR/lidmode.sudoers"
+run_sudo /usr/sbin/visudo -cf "$ROOT_STAGING_DIR/lidmode.sudoers"
 
 MUTATION_STARTED=1
 
@@ -189,15 +197,15 @@ if /usr/bin/pgrep -f '^/Applications/LidMode\.app/Contents/MacOS/LidMode$' >/dev
     fi
 fi
 
-/usr/bin/sudo /bin/mkdir -p /etc/sudoers.d
-/usr/bin/sudo /usr/bin/install -o root -g wheel -m 755 "$ROOT_STAGING_DIR/lidmode-helper" "$HELPER_TARGET"
-/usr/bin/sudo /usr/bin/install -o root -g wheel -m 440 "$ROOT_STAGING_DIR/lidmode.sudoers" "$SUDOERS_TARGET"
-/usr/bin/sudo /usr/sbin/visudo -cf "$SUDOERS_TARGET"
+run_sudo /bin/mkdir -p /etc/sudoers.d
+run_sudo /usr/bin/install -o root -g wheel -m 755 "$ROOT_STAGING_DIR/lidmode-helper" "$HELPER_TARGET"
+run_sudo /usr/bin/install -o root -g wheel -m 440 "$ROOT_STAGING_DIR/lidmode.sudoers" "$SUDOERS_TARGET"
+run_sudo /usr/sbin/visudo -cf "$SUDOERS_TARGET"
 
-/usr/bin/sudo /bin/rm -rf "$APP_TARGET"
-/usr/bin/sudo /usr/bin/ditto "$BUILT_APP" "$APP_TARGET"
-/usr/bin/sudo /usr/sbin/chown -R root:wheel "$APP_TARGET"
-/usr/bin/sudo /usr/bin/codesign --force --deep --sign - "$APP_TARGET"
+run_sudo /bin/rm -rf "$APP_TARGET"
+run_sudo /usr/bin/ditto "$BUILT_APP" "$APP_TARGET"
+run_sudo /usr/sbin/chown -R root:wheel "$APP_TARGET"
+run_sudo /usr/bin/codesign --force --deep --sign - "$APP_TARGET"
 
 EXPECTED_HELPER_SHA256="$HELPER_SHA256" "$SCRIPT_DIR/verify-install.sh"
 

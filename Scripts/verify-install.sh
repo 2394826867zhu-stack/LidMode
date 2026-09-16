@@ -9,6 +9,14 @@ APP_IDENTIFIER="io.github.2394826867zhu-stack.LidMode"
 APP_PROCESS_PATTERN='^/Applications/LidMode\.app/Contents/MacOS/LidMode$'
 REQUIRE_RUNNING=0
 
+run_sudo() {
+    if [[ -n "${SUDO_ASKPASS:-}" ]]; then
+        /usr/bin/sudo -A "$@"
+    else
+        /usr/bin/sudo "$@"
+    fi
+}
+
 if [[ "${1:-}" == "--require-running" ]]; then
     REQUIRE_RUNNING=1
 elif [[ $# -ne 0 ]]; then
@@ -50,8 +58,8 @@ agent_only="$(/usr/bin/plutil -extract LSUIElement raw "$APP_PATH/Contents/Info.
 [[ "$agent_only" == "true" ]] || fail "LSUIElement is not enabled"
 
 echo "Administrator approval is needed to validate the installed sudoers file."
-/usr/bin/sudo -v
-/usr/bin/sudo /usr/sbin/visudo -cf "$SUDOERS_PATH" >/dev/null
+run_sudo -v
+run_sudo /usr/sbin/visudo -cf "$SUDOERS_PATH" >/dev/null
 
 CURRENT_USER="$(/usr/bin/id -un)"
 [[ "$CURRENT_USER" =~ ^[A-Za-z0-9._-]+$ ]] || fail "unsupported account name"
@@ -59,7 +67,7 @@ EXPECTED_SUDOERS="$(/usr/bin/mktemp "${TMPDIR:-/tmp}/lidmode-sudoers.XXXXXX")"
 trap '/bin/rm -f "$EXPECTED_SUDOERS"' EXIT
 /usr/bin/printf '%s ALL=(root) NOPASSWD: %s on, %s off, %s status\n' \
     "$CURRENT_USER" "$HELPER_PATH" "$HELPER_PATH" "$HELPER_PATH" > "$EXPECTED_SUDOERS"
-/usr/bin/sudo /usr/bin/cmp -s "$EXPECTED_SUDOERS" "$SUDOERS_PATH" || \
+run_sudo /usr/bin/cmp -s "$EXPECTED_SUDOERS" "$SUDOERS_PATH" || \
     fail "sudoers policy differs from the exact three-command allowlist"
 
 if [[ -n "${EXPECTED_HELPER_SHA256:-}" ]]; then

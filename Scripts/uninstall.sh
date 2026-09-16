@@ -13,6 +13,14 @@ MOVED_HELPER=0
 MOVED_SUDOERS=0
 APP_WAS_RUNNING=0
 
+run_sudo() {
+    if [[ -n "${SUDO_ASKPASS:-}" ]]; then
+        /usr/bin/sudo -A "$@"
+    else
+        /usr/bin/sudo "$@"
+    fi
+}
+
 cleanup() {
     if [[ "$UNINSTALL_COMMITTED" -ne 1 && -n "$ROOT_STAGING_DIR" ]]; then
         echo "Uninstall failed; restoring files that were already moved." >&2
@@ -37,14 +45,14 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Administrator approval is needed to restore normal sleep and remove LidMode."
-/usr/bin/sudo -v
+run_sudo -v
 
 if /usr/bin/pgrep -f "$APP_PROCESS_PATTERN" >/dev/null; then
     APP_WAS_RUNNING=1
 fi
 
 echo "Restoring and verifying normal sleep before uninstall..."
-/usr/bin/sudo /usr/bin/pmset -a disablesleep 0
+run_sudo /usr/bin/pmset -a disablesleep 0
 PMSET_OUTPUT="$(/usr/bin/pmset -g)"
 if ! /usr/bin/grep -Eq '^[[:space:]]*SleepDisabled[[:space:]]+0[[:space:]]*$' <<< "$PMSET_OUTPUT" && {
     ! /usr/bin/grep -q '^System-wide power settings:' <<< "$PMSET_OUTPUT" ||
@@ -73,18 +81,18 @@ if [[ "$APP_WAS_RUNNING" -eq 1 ]]; then
     fi
 fi
 
-ROOT_STAGING_DIR="$(/usr/bin/sudo /usr/bin/mktemp -d /private/tmp/lidmode-uninstall.XXXXXX)"
+ROOT_STAGING_DIR="$(run_sudo /usr/bin/mktemp -d /private/tmp/lidmode-uninstall.XXXXXX)"
 
 if [[ -d "$APP_PATH" ]]; then
-    /usr/bin/sudo /bin/mv "$APP_PATH" "$ROOT_STAGING_DIR/LidMode.app"
+    run_sudo /bin/mv "$APP_PATH" "$ROOT_STAGING_DIR/LidMode.app"
     MOVED_APP=1
 fi
 if [[ -e "$HELPER_PATH" ]]; then
-    /usr/bin/sudo /bin/mv "$HELPER_PATH" "$ROOT_STAGING_DIR/lidmode-helper"
+    run_sudo /bin/mv "$HELPER_PATH" "$ROOT_STAGING_DIR/lidmode-helper"
     MOVED_HELPER=1
 fi
 if [[ -e "$SUDOERS_PATH" ]]; then
-    /usr/bin/sudo /bin/mv "$SUDOERS_PATH" "$ROOT_STAGING_DIR/lidmode.sudoers"
+    run_sudo /bin/mv "$SUDOERS_PATH" "$ROOT_STAGING_DIR/lidmode.sudoers"
     MOVED_SUDOERS=1
 fi
 
@@ -94,6 +102,6 @@ if [[ -e "$HELPER_PATH" || -e "$SUDOERS_PATH" || -e "$APP_PATH" ]]; then
 fi
 
 UNINSTALL_COMMITTED=1
-/usr/bin/sudo /bin/rm -rf "$ROOT_STAGING_DIR"
+run_sudo /bin/rm -rf "$ROOT_STAGING_DIR"
 ROOT_STAGING_DIR=""
 echo "LidMode was completely removed. Normal sleep was restored and verified first."

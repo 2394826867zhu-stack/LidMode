@@ -55,6 +55,7 @@ behavioral coverage. `HelperClient.swift` reached only 3.45%.
 | LM-007 | P2 | The installer reported success without confirming that the installed app remained running. | Resolved: launch and process-liveness gate added before commit. |
 | LM-008 | P3 | The parser's omitted-key fallback accepted a relatively weak approximation of a complete `pmset -g` response. | Resolved: at least two recognized settings are now required; truncated-output test added. |
 | LM-009 | P3 | The release workflow did not exercise a signed SMAppService/XPC round trip. | Partially mitigated: tag releases now rerun tests and verify matching non-empty Team IDs. A real approved XPC round trip remains a manual release gate. |
+| LM-010 | P2 | Installation assumed an interactive terminal and could not use a secure macOS askpass prompt. | Resolved after installation testing: install, verify, rollback, and uninstall consistently honor `SUDO_ASKPASS` via `sudo -A`. |
 
 ## Required release gates
 
@@ -89,6 +90,9 @@ behavioral coverage. `HelperClient.swift` reached only 3.45%.
 - Debug and Release builds passed, and Xcode static analysis reported no findings.
 - Swift formatting, shell syntax, property lists, helper allowlist behavior, and diff whitespace
   checks passed.
+- A real installation attempt confirmed that canceled authorization leaves the existing installation
+  untouched; the resulting no-terminal authorization defect was fixed with consistent askpass
+  support.
 
 Post-remediation assessment: **8.2 / 10**. The remaining material release limitation is the lack of
 a Developer-ID-signed, administrator-approved SMAppService/XPC acceptance run. That cannot be
