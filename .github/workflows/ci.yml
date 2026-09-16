@@ -15,7 +15,7 @@ jobs:
       - name: Validate source and scripts
         run: |
           set -euo pipefail
-          /bin/bash -n Scripts/install.sh Scripts/uninstall.sh Scripts/verify-install.sh Tests/helper-integration.sh
+          /bin/bash -n Scripts/install.sh Scripts/uninstall.sh Scripts/verify-install.sh Scripts/build-share-package.sh Tests/helper-integration.sh
           xcrun swift-format lint --recursive LidMode Helper PrivilegedHelper Shared Tests
           plutil -lint LidMode/Info.plist PrivilegedHelper/app.lidmode.PrivilegedHelper.plist
       - name: Test

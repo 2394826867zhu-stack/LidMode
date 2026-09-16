@@ -200,3 +200,35 @@ hardware acceptance items.
   but not by a long-running automated AppKit UI-test target.
 - Screen locking, managed-device policy, thermal shutdown, and critical-battery behavior remain under
   macOS control and are intentionally not bypassed.
+
+## Trusted-recipient M2 package — 2026-09-16
+
+The friend-share path is a precompiled, offline, arm64-only ZIP. It requires no Xcode on the
+recipient Mac and exposes clickable Chinese install and uninstall commands. The installer reuses
+the existing transactional backup/rollback path, restricted helper, exact three-command sudoers
+allowlist, post-install verification, and launch check; it does not introduce a second privileged
+installation implementation.
+
+Validation evidence:
+
+- A clean Release application and restricted helper were built as native arm64 executables. The
+  payload application was ad-hoc signed and passed strict deep signature verification.
+- The final archive checksum passed. Archive inspection found no module cache, DerivedData,
+  AppleDouble metadata, source tree, or credential. Both command wrappers and all support scripts
+  retained executable permissions and passed Bash syntax checks.
+- The final ZIP was extracted into a fresh directory and its payload version (`1.2.0`, build `3`),
+  bundle identifier, `LSUIElement` value, architectures, scripts, and signature were independently
+  checked.
+- The extracted package, rather than the repository installer entry point, was used for a real
+  overwrite installation on the target Apple Silicon Mac. Both pre-launch and post-launch
+  verification passed, the application launched successfully, and the independently reported
+  final power state remained `NORMAL`.
+- Installed ownership and modes remained `root:wheel 755` for the application and helper and
+  `root:wheel 440` for the sudoers file. Quarantine removal is limited to the installed LidMode
+  bundle after the user explicitly starts the installer; a missing quarantine attribute is treated
+  as a harmless no-op. No global Gatekeeper preference is changed.
+
+Distribution limitation: this convenience package is ad-hoc signed, not Developer-ID signed or
+Apple-notarized. Its intended scope is direct transfer to one trusted recipient, who must use
+Finder's one-time right-click/Open confirmation. A warning-free public distribution still requires
+an Apple Developer Program identity and notarization.

@@ -81,6 +81,18 @@ It validates the sudoers syntax and exact three-command policy, verifies applica
 
 After installation, the app starts and enables its login item with `SMAppService` by default. This can be changed in LidMode settings. Depending on macOS policy, Login Items may show a system notification or require approval in **System Settings → General → Login Items**. Failure to register does not affect the toggle while the app is running.
 
+## Build a simple M2 share package
+
+For a trusted recipient with a similar Apple Silicon Mac who does not have Xcode, build a precompiled offline package:
+
+```bash
+./Scripts/build-share-package.sh /path/to/output
+```
+
+The output contains `LidMode-<version>-M2.zip` and its SHA-256 file. The recipient extracts the ZIP, right-clicks `安装 LidMode.command`, chooses Open, and enters their Mac login password once. The package installs the same app, restricted helper, exact sudoers policy, settings, login item, verification, and rollback behavior as the source installer. It also includes a clickable uninstaller.
+
+This package is ad-hoc signed rather than Developer-ID signed. The first right-click/Open is therefore unavoidable. The installer removes quarantine only from the installed LidMode bundle after the user has explicitly launched the installer; it does not disable Gatekeeper or change global security settings.
+
 ## Use
 
 Left-click the menu bar item to switch directly between Normal and Awake. Right-click it for a compact menu containing the current state, the toggle action, Settings, and Quit. Quit is always the final menu item.

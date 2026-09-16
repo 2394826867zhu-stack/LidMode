@@ -22,6 +22,7 @@ CREATED_LIBEXEC=0
 CREATED_USR_LOCAL=0
 MUTATION_STARTED=0
 APP_WAS_RUNNING=0
+PREBUILT_MODE=0
 
 run_sudo() {
     if [[ -n "${SUDO_ASKPASS:-}" ]]; then
@@ -90,11 +91,6 @@ if [[ "$(/usr/bin/uname -m)" != "arm64" ]]; then
     exit 1
 fi
 
-if [[ ! -x "$XCODEBUILD" ]]; then
-    echo "Xcode is required at $DEVELOPER_DIR_PATH." >&2
-    exit 1
-fi
-
 CURRENT_USER="$(/usr/bin/id -un)"
 if [[ ! "$CURRENT_USER" =~ ^[A-Za-z0-9._-]+$ ]]; then
     echo "Unsupported account name for sudoers: $CURRENT_USER" >&2
@@ -103,24 +99,47 @@ fi
 
 /bin/mkdir -p "$BACKUP_DIR" "$BUILD_DIR"
 
-echo "Building LidMode.app..."
-DEVELOPER_DIR="$DEVELOPER_DIR_PATH" "$XCODEBUILD" \
-    -project "$PROJECT_ROOT/LidMode.xcodeproj" \
-    -scheme LidMode \
-    -destination "platform=macOS,arch=arm64" \
-    -configuration Release \
-    -derivedDataPath "$BUILD_DIR/DerivedData" \
-    CODE_SIGNING_ALLOWED=NO \
-    build
+if [[ -n "${LIDMODE_PREBUILT_APP:-}" || -n "${LIDMODE_PREBUILT_HELPER:-}" ]]; then
+    if [[ -z "${LIDMODE_PREBUILT_APP:-}" || -z "${LIDMODE_PREBUILT_HELPER:-}" ]]; then
+        echo "Both LIDMODE_PREBUILT_APP and LIDMODE_PREBUILT_HELPER are required." >&2
+        exit 1
+    fi
+    if [[ ! -d "$LIDMODE_PREBUILT_APP" || ! -x "$LIDMODE_PREBUILT_HELPER" ]]; then
+        echo "The prebuilt LidMode payload is incomplete." >&2
+        exit 1
+    fi
 
-BUILT_APP="$BUILD_DIR/DerivedData/Build/Products/Release/LidMode.app"
-if [[ ! -d "$BUILT_APP" ]]; then
-    echo "Build did not produce LidMode.app." >&2
-    exit 1
+    PREBUILT_MODE=1
+    BUILT_APP="$BUILD_DIR/LidMode.app"
+    echo "Staging the prebuilt LidMode payload..."
+    /usr/bin/ditto "$LIDMODE_PREBUILT_APP" "$BUILT_APP"
+    /bin/cp "$LIDMODE_PREBUILT_HELPER" "$BUILD_DIR/lidmode-helper"
+    /bin/chmod 755 "$BUILD_DIR/lidmode-helper"
+else
+    if [[ ! -x "$XCODEBUILD" ]]; then
+        echo "Xcode is required at $DEVELOPER_DIR_PATH." >&2
+        exit 1
+    fi
+
+    echo "Building LidMode.app..."
+    DEVELOPER_DIR="$DEVELOPER_DIR_PATH" "$XCODEBUILD" \
+        -project "$PROJECT_ROOT/LidMode.xcodeproj" \
+        -scheme LidMode \
+        -destination "platform=macOS,arch=arm64" \
+        -configuration Release \
+        -derivedDataPath "$BUILD_DIR/DerivedData" \
+        CODE_SIGNING_ALLOWED=NO \
+        build
+
+    BUILT_APP="$BUILD_DIR/DerivedData/Build/Products/Release/LidMode.app"
+    if [[ ! -d "$BUILT_APP" ]]; then
+        echo "Build did not produce LidMode.app." >&2
+        exit 1
+    fi
+
+    echo "Building restricted helper..."
+    DEVELOPER_DIR="$DEVELOPER_DIR_PATH" "$PROJECT_ROOT/Helper/build-helper.sh" "$BUILD_DIR/lidmode-helper"
 fi
-
-echo "Building restricted helper..."
-DEVELOPER_DIR="$DEVELOPER_DIR_PATH" "$PROJECT_ROOT/Helper/build-helper.sh" "$BUILD_DIR/lidmode-helper"
 
 /usr/bin/printf '%s ALL=(root) NOPASSWD: %s on, %s off, %s status\n' \
     "$CURRENT_USER" "$HELPER_TARGET" "$HELPER_TARGET" "$HELPER_TARGET" > "$SUDOERS_FILE"
@@ -206,6 +225,12 @@ run_sudo /bin/rm -rf "$APP_TARGET"
 run_sudo /usr/bin/ditto "$BUILT_APP" "$APP_TARGET"
 run_sudo /usr/sbin/chown -R root:wheel "$APP_TARGET"
 run_sudo /usr/bin/codesign --force --deep --sign - "$APP_TARGET"
+if [[ "$PREBUILT_MODE" -eq 1 ]]; then
+    # A locally copied archive may not carry quarantine metadata. Treat the
+    # attribute being absent as success, while keeping the exception scoped to
+    # the installed LidMode bundle only.
+    run_sudo /usr/bin/xattr -dr com.apple.quarantine "$APP_TARGET" 2>/dev/null || true
+fi
 
 EXPECTED_HELPER_SHA256="$HELPER_SHA256" "$SCRIPT_DIR/verify-install.sh"
 
