@@ -93,6 +93,14 @@ behavioral coverage. `HelperClient.swift` reached only 3.45%.
 - A real installation attempt confirmed that canceled authorization leaves the existing installation
   untouched; the resulting no-terminal authorization defect was fixed with consistent askpass
   support.
+- The remediated source build was then installed on the target MacBook Air. Both pre-launch and
+  post-launch installation verification passed, the menu-bar process remained alive at 0.0% CPU
+  and approximately 0.3% memory, and no network socket was open.
+- The installed helper completed the real `NORMAL -> AWAKE -> NORMAL` integration sequence. The
+  final state was independently read back as `NORMAL`.
+- Installed ownership and modes were confirmed as `root:wheel 755` for the app and compatibility
+  helper and `root:wheel 440` for the sudoers file. The effective passwordless rule remained limited
+  to the exact `on`, `off`, and `status` helper invocations.
 
 Post-remediation assessment: **8.2 / 10**. The remaining material release limitation is the lack of
 a Developer-ID-signed, administrator-approved SMAppService/XPC acceptance run. That cannot be
